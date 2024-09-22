@@ -1,13 +1,20 @@
+import 'dart:async';
+
+import 'package:app/custom_cache.dart';
 import 'package:app/helpers/asset_actions.dart';
 import 'package:app/helpers/toast.dart';
 import 'package:app/main.dart';
 import 'package:app/models/asset_base_model.dart';
+import 'package:app/models/asset_model.dart';
+import 'package:app/models/face_model.dart';
+import 'package:app/pages/face_thumbs_page.dart';
 import 'package:app/widget/nicely_dismissable_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:latlong2/latlong.dart' as latlong2;
+import 'package:app/helpers/image_crop.dart';
 
 import 'simple_photo_viewer.dart';
 import 'simple_video_player_widget.dart';
@@ -60,6 +67,29 @@ class _SimpleGalleryState extends State<SimpleGallery> {
     }
   }
 
+  Future<List<Widget>?> _getFaces(AssetBaseModel asset) async {
+    print("getFaces");
+    if (asset is! AssetModel) {
+      return null;
+    }
+    print("getFaces2");
+    AssetModel a = asset as AssetModel;
+    var faces = await a.getFaces();
+    var result = <Widget>[];
+    for (var face in faces!) {
+      result.add(GestureDetector(
+        onTap: () {
+          // Open face details (FaceThumbsPage)
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => FaceThumbsPage(faceModel: face)));
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(left: 7),
+          child: FaceCropperWidget(faceRect: face.rect, asset: face.asset, width: 50, height: 50, shape: BoxShape.rectangle),
+        ),
+      ));
+    }
+    return result;
+  }
 
   Widget buildMap(AssetBaseModel asset) => FlutterMap(
       options: MapOptions(
@@ -84,6 +114,30 @@ class _SimpleGalleryState extends State<SimpleGallery> {
         ]),
       ],
     );
+
+    Widget _faceBuilder(BuildContext context, AsyncSnapshot<List<Widget>?> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const CircularProgressIndicator();
+      }
+      if (snapshot.hasError) {
+        return Text("Error loading faces"+snapshot.error.toString());
+      }
+      if (!snapshot.hasData) {
+        return const SizedBox();
+      }
+      if (snapshot.data!.isEmpty) {
+        return const SizedBox();
+      }
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            const SizedBox(height: 10),
+            ...snapshot.data!,
+          ],
+        ),
+      );
+    }
 
     void rebuild() => setState(() {});
     @override
@@ -132,6 +186,18 @@ class _SimpleGalleryState extends State<SimpleGallery> {
                         Text(currentAsset.name+", "+currentAsset.readableSize(), style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey)),
                         const SizedBox(height: 5),
                         Text(currentAsset.createdDate, style: Theme.of(context).textTheme.titleSmall),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              FutureBuilder(
+                                  future: _getFaces(currentAsset),
+                                  builder: _faceBuilder
+                              ),
+                            ],
+                          ),
+                        ),
                         if (currentAsset.location != null)
                           const SizedBox(height: 5),
                         if (currentAsset.location != null && currentAsset.gpsLat != null && currentAsset.gpsLong != null)

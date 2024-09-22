@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:app/models/asset_base_model.dart';
+import 'package:app/models/face_model.dart';
 import 'account_model.dart';
 
 class AssetModel extends AssetBaseModel {
 
   final AccountModel account;
   bool favourite;
+  List<FaceModel> faces = [];
+  bool _facesLoaded = false;
 
   @override
   bool get isOwn => account.userID == owner;
@@ -97,4 +100,22 @@ class AssetModel extends AssetBaseModel {
     return result.file;
   }
 
+  Future<void> _loadFaces() async {
+    final result = await account.apiClient.get("/asset/faces?asset_id="+id.toString());
+    if (result.status == 200) {
+      final json = jsonDecode(result.body);
+      faces = [];
+      for (var face in json) {
+        faces.add(FaceModel.fromJson(this, face));
+      }
+    }
+  }
+
+  Future<List<FaceModel>?> getFaces() async {
+    if (!_facesLoaded) {
+      await _loadFaces();
+      _facesLoaded = true;
+    }
+    return faces;
+  }
 }

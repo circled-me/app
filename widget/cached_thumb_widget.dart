@@ -10,7 +10,8 @@ class CachedThumb extends StatelessWidget {
   final AssetBaseModel asset;
   final bool fit, selected;
   final int size;
-  const CachedThumb({Key? key, required this.asset, this.fit=true, this.selected=false, this.size=small}) : super(key: key);
+  final cropX1, cropY1, cropX2, cropY2;
+  const CachedThumb({Key? key, required this.asset, this.fit=true, this.selected=false, this.size=small, this.cropX1=-1, this.cropY1=-1, this.cropX2=-1, this.cropY2=-1}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
