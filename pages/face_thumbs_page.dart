@@ -12,8 +12,10 @@ import 'package:app/services/albums_service.dart';
 import 'package:app/services/assets_service.dart';
 import 'package:app/services/user_service.dart';
 import 'package:app/widget/multi_user_widget.dart';
+import 'package:app/widget/person_select_widget.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
 import 'package:app/helpers/toast.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 
 import '../helpers/album.dart';
@@ -49,8 +51,8 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
   final _nameCtrl = TextEditingController();
   final _scrollController = ScrollController();
 
-  static const double _baseHeaderHeight = 200;
-  static const double _minHeaderHeight = 120;
+  static const double _baseHeaderHeight = 150;
+  static const double _minHeaderHeight = 150;
   double _headerHeight = _baseHeaderHeight;
 
   @override
@@ -118,53 +120,6 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
     setState(() => () {});
    }
 
-
-  void removeButtonPressed() async {
-    // final rootContext = MyApp.navigatorKey.currentState!.context;
-    // finalAction(bool shouldDelete) async {
-    //   Navigator.of(rootContext).pop();
-    //   if (!shouldDelete) {
-    //     return;
-    //   }
-    //   final error = await removeAssets();
-    //   if (error != "") {
-    //     print("removeAssets() error: "+error);
-    //     Toast.show(msg: "Couldn't remove some of the selected assets from the album. Make sure you have the right permissions to do so.");
-    //     return;
-    //   }
-    //   setState(() => () {});
-    // }
-    // final warningText = selected.length>1
-    //     ? "Are you sure you want to remove "+ selected.length.toString() +" assets from the album?"
-    //     : "Are you sure you want to remove the selected asset from the album?";
-    // showDialog(
-    //   context: rootContext,
-    //   barrierDismissible: true,
-    //   builder: (BuildContext context) {
-    //     return AlertDialog(
-    //       title: const Text('Remove from album'),
-    //       content: SingleChildScrollView(
-    //         child: ListBody(
-    //           children: [
-    //             Text(warningText),
-    //           ],
-    //         ),
-    //       ),
-    //       actions: <Widget>[
-    //         TextButton(
-    //           child: const Text('Remove'),
-    //           onPressed: () => finalAction(true),
-    //         ),
-    //         TextButton(
-    //           child: const Text('Cancel'),
-    //           onPressed: () => finalAction(false),
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
-  }
-
   void downloadButtonPressed() async {
     Asset.downloadDialog(selected, assets, (result) {
       Toast.show(msg: result ? "All downloaded!" : "Couldn't downloaded some of the assets...");
@@ -175,106 +130,40 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
   }
 
   void editDialog() async {
-    // final rootContext = MyApp.navigatorKey.currentState!.context;
-    // _nameCtrl.text = widget.albumInfo.name;
-    //
-    // finalAction(bool shouldSave) async {
-    //   if (!shouldSave) {
-    //     Navigator.of(rootContext).pop();
-    //     return;
-    //   }
-    //   final oldAlbumName = widget.albumInfo.name;
-    //   widget.albumInfo.name = _nameCtrl.text;
-    //   final response = await AlbumsService.save(widget.albumInfo);
-    //   if (response.status != 200) {
-    //     Toast.show(msg: "Couldn't save album name");
-    //     widget.albumInfo.name = oldAlbumName; // restore
-    //     return;
-    //   }
-    //   Navigator.of(rootContext).pop();
-    //   setState(() => () {});
-    // }
-    //
-    // showDialog(
-    //   context: rootContext,
-    //   barrierDismissible: true,
-    //   builder: (BuildContext context) {
-    //     return AlertDialog(
-    //       title: const Text('Edit album'),
-    //       content: SingleChildScrollView(
-    //           child: RoundInputHint(ctrl: _nameCtrl, hintText: "Name",)
-    //       ),
-    //       actions: <Widget>[
-    //         TextButton(
-    //           child: const Text('Delete', style: TextStyle(color: AppConst.attentionColor)),
-    //           onPressed: deleteDialog,
-    //         ),
-    //         TextButton(
-    //           child: const Text('Save'),
-    //           onPressed: () => finalAction(true),
-    //         ),
-    //         TextButton(
-    //           child: const Text('Cancel'),
-    //           onPressed: () => finalAction(false),
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
-  }
-
-  void chooseHeroDialog(AssetModel newHero) async {
-    // final rootContext = MyApp.navigatorKey.currentState!.context;
-    // finalAction(bool shouldSave) async {
-    //   if (!shouldSave) {
-    //     Navigator.of(rootContext).pop();
-    //     return;
-    //   }
-    //   widget.albumInfo.heroAssetID = newHero.id;
-    //   final response = await AlbumsService.save(widget.albumInfo);
-    //   if (response.status != 200) {
-    //     Toast.show(msg: "Couldn't save album cover");
-    //     return;
-    //   }
-    //   Navigator.of(rootContext).pop();
-    //   setState(() {
-    //     selected.clear();
-    //   });
-    // }
-    // showDialog(
-    //   context: rootContext,
-    //   barrierDismissible: true,
-    //   builder: (BuildContext context) {
-    //     return AlertDialog(
-    //       title: const Text('Set album cover'),
-    //       content: const SingleChildScrollView(
-    //         child: ListBody(
-    //           children: [
-    //             Text("Do you want to set the selected photo as an album cover?"),
-    //           ],
-    //         ),
-    //       ),
-    //       actions: <Widget>[
-    //         TextButton(
-    //           child: const Text('Set'),
-    //           onPressed: () => finalAction(true),
-    //         ),
-    //         TextButton(
-    //           child: const Text('Cancel'),
-    //           onPressed: () => finalAction(false),
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
-  }
-
-  void shareButtonPressed() async {
-    if (await Album.shareAssets(selected.map((i) => assets[i] as AssetModel).toList())) {
-      setState(() {
-        selected.clear();
+    final people = await UserService.forAccount(widget.faceModel.asset.account).then((service) => service.getPeople());
+    final rootContext = MyApp.navigatorKey.currentState!.context;
+    // Use PersonSelectWidget to select person for the face
+    PersonSelectWidget.show(
+      context: rootContext,
+      title: "Name",
+      hint: ".. or select a person below",
+      people: people,
+      okButtonText: "Save",
+      callback: (personId, personName) async {
+        if (personId == -1) {
+          // Create new person
+          personId = await widget.faceModel.createPerson(personName);
+          if (personId <= 0) {
+            Toast.show(msg: "Could not create a new person", gravity: Toast.ToastGravityCenter);
+            return;
+          }
+          // Reset the people list
+          UserService.forAccount(widget.faceModel.asset.account).then((service) => service.resetPeople());
+        }
+        final success = await widget.faceModel.assignToPerson(personId);
+        if (!success) {
+          Toast.show(msg: "Could not save person for the face", gravity: Toast.ToastGravityCenter);
+          return;
+        }
+        widget.faceModel.personName = personName;
+        Navigator.of(rootContext).pop();
+        setState(() {
+          selected.clear();
+        });
       });
-    }
+  }
+  void chooseHeroDialog(AssetModel newHero) async {
+    // Choose default hero for the face
   }
 
   Widget _faceHeader(double height, Future<List<AssetModel>> futureAssets) {
@@ -297,13 +186,13 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
         onPressed: editDialog,
         child: const Icon(Icons.edit_outlined),
       ),
-      const SizedBox(width: 5,),
-      FloatingActionButton(
-        backgroundColor: AppConst.actionButtonColor,
-        heroTag: null,
-        onPressed: () => {}, //Album.share(widget.albumInfo as AlbumModel),
-        child: const Icon(Icons.share_outlined),
-      ),
+      // const SizedBox(width: 5,),
+      // FloatingActionButton(
+      //   backgroundColor: AppConst.actionButtonColor,
+      //   heroTag: null,
+      //   onPressed: () => {}, //Album.share(widget.albumInfo as AlbumModel),
+      //   child: const Icon(Icons.share_outlined),
+      // ),
     ];
 
     final topButtons = Container(
@@ -314,75 +203,78 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
           children: topButtonList
       ),
     );
-    return Hero(
-      tag: widget.faceModel.tag,
-      transitionOnUserGestures: true,
-      child: SizedBox(
-        width: double.infinity,
-        height: height,
-        child: Stack(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                // child: CachedThumb(asset: widget.faceModel.asset, fit: true, size: CachedThumb.big),
-                child: FaceCropperWidget(faceRect: widget.faceModel.bigSquare, asset: widget.faceModel.asset, width: 550, shape: BoxShape.rectangle)
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(215)
               ),
-              Container(
-                alignment: Alignment.bottomLeft,
-                decoration:  BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withAlpha(00),
-                      Colors.black.withAlpha(230),
-                    ],
-                    stops: const [0.5, 1],
-                  ),
+              child: Center(
+                child: SizedBox(
+                  width: height,
+                  height: height,
+                  child: FaceCropperWidget(faceRect: widget.faceModel.rect, asset: widget.faceModel.asset, width: 500, height: 500, shape: BoxShape.circle)
                 ),
-                child: Container(
-                    margin: const EdgeInsets.only(bottom: 5, left: 10),
-                    child: Stack(
-                      children: [Positioned(
-                        left: 7,
-                        bottom: 7,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.faceModel.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+              ),
+            ),
+            Container(
+              alignment: Alignment.bottomLeft,
+              decoration:  BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withAlpha(0),
+                    Colors.black.withAlpha(228),
+                  ],
+                  stops: const [0.55, 1],
+                ),
+              ),
+              child: Container(
+                  margin: const EdgeInsets.only(bottom: 5, left: 10),
+                  child: Stack(
+                    children: [Positioned(
+                      left: 7,
+                      bottom: 7,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.faceModel.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
-                            // FutureBuilder(
-                            //   future: futureAssets,
-                            //   builder: (ctx, snapshot) {
-                            //     if (snapshot.data == null) {
-                            //       return const SizedBox();
-                            //     }
-                            //     final assets = snapshot.data as List<AssetModel>;
-                            //     return Text(
-                            //       assets.length.toString() + " assets",
-                            //       style: const TextStyle(
-                            //         color: Colors.white,
-                            //         fontSize: 14,
-                            //       ),
-                            //     );
-                            //   }
-                            // ),
-                          ],
-                        ),
-                      )],
-                    )
-                ),
+                          ),
+                          FutureBuilder(
+                            future: futureAssets,
+                            builder: (ctx, snapshot) {
+                              if (snapshot.data == null) {
+                                return const SizedBox();
+                              }
+                              final assets = snapshot.data as List<AssetModel>;
+                              return Text(
+                                assets.length.toString() + " photos and videos",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              );
+                            }
+                          ),
+                        ],
+                      ),
+                    )],
+                  )
               ),
-              topButtons,
-            ]
-        ),
+            ),
+            topButtons,
+          ]
       ),
     );
   }
@@ -405,13 +297,6 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
     actions.addAll(AssetActions(assets: assets, selected: selected, callback: () => setState(() {
       selected.clear();
     })).get());
-    actions.addAll([
-      const SizedBox(width: 10,),
-      IconButton(
-        onPressed: removeButtonPressed,
-        icon: const Icon(Icons.remove_circle_outline),
-      ),
-    ]);
     if (selected.length > 1) {
       actions.addAll([
         const SizedBox(width: 10,),
@@ -423,6 +308,10 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
     }
     var futureAssets = _getAssets();
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        toolbarHeight: 0,
+      ),
       backgroundColor: Colors.white,
       body: Column(
         children: [

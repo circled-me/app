@@ -58,4 +58,30 @@ class FaceModel {
     }
     return assets;
   }
+
+  Future<bool> assignToPerson(int personId) async {
+    final result = await asset.account.apiClient.post("/faces/assign", body: jsonEncode({
+      "id": id,
+      "person_id": personId
+    }));
+    if (result.status != 200) {
+      return false;
+    }
+    this.personId = personId;
+    return true;
+  }
+
+  Future<int> createPerson(String name) async {
+    final result = await asset.account.apiClient.post("/faces/create-person", body: jsonEncode({
+      "id": id,
+      "person_name": name
+    }));
+    if (result.status != 200) {
+      return 0;
+    }
+    final json = jsonDecode(result.body);
+    personName = name;
+    personId = json["person_id"];
+    return personId;
+  }
 }

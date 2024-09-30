@@ -13,6 +13,10 @@ class CachedThumb extends StatelessWidget {
   final cropX1, cropY1, cropX2, cropY2;
   const CachedThumb({Key? key, required this.asset, this.fit=true, this.selected=false, this.size=small, this.cropX1=-1, this.cropY1=-1, this.cropX2=-1, this.cropY2=-1}) : super(key: key);
 
+  static CachedNetworkImageProvider imageProvider(AssetBaseModel asset) {
+    return CachedNetworkImageProvider(asset.bigThumbUrl, headers: asset.requestHeaders, cacheManager: CustomCacheManager.instance);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
