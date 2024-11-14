@@ -1,27 +1,17 @@
 import 'dart:collection';
-import 'dart:convert';
 import 'package:app/app_consts.dart';
 import 'package:app/helpers/asset.dart';
 import 'package:app/helpers/asset_actions.dart';
 import 'package:app/helpers/image_crop.dart';
-import 'package:app/models/album_base_model.dart';
-import 'package:app/models/album_model.dart';
 import 'package:app/models/asset_base_model.dart';
 import 'package:app/models/face_model.dart';
 import 'package:app/services/albums_service.dart';
-import 'package:app/services/assets_service.dart';
 import 'package:app/services/user_service.dart';
-import 'package:app/widget/multi_user_widget.dart';
 import 'package:app/widget/person_select_widget.dart';
-import 'package:app/widget/round_input_hint_widget.dart';
 import 'package:app/helpers/toast.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 
-import '../helpers/album.dart';
-import '../helpers/user.dart';
 import '../main.dart';
-import '../widget/cached_thumb_widget.dart';
 import '../widget/simple_gallery_widget.dart';
 
 
@@ -30,7 +20,6 @@ import '../services/accounts_service.dart';
 
 import 'package:flutter/material.dart';
 
-import 'albums_page.dart';
 
 
 
@@ -243,12 +232,21 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            widget.faceModel.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              alignment: Alignment.centerLeft,
+                              minimumSize: const Size(0, 0),
+                            ),
+                            onPressed: () => widget.faceModel.personName.isEmpty ? editDialog() : null,
+                            child: Text(
+                              widget.faceModel.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           FutureBuilder(
@@ -286,7 +284,7 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
     if (selected.length == 1) {
       actions.add(
         IconButton(
-          onPressed: () => chooseHeroDialog(assets[selected.first] as AssetModel),
+          onPressed: () => chooseHeroDialog(assets[selected.first]),
           icon: const Icon(Icons.folder_special),
         ),
       );

@@ -6,7 +6,6 @@ import 'package:app/helpers/toast.dart';
 import 'package:app/main.dart';
 import 'package:app/models/asset_base_model.dart';
 import 'package:app/models/asset_model.dart';
-import 'package:app/models/face_model.dart';
 import 'package:app/pages/face_thumbs_page.dart';
 import 'package:app/widget/nicely_dismissable_widget.dart';
 import 'package:flutter/material.dart';
@@ -83,8 +82,7 @@ class _SimpleGalleryState extends State<SimpleGallery> {
           child: Column(
             children: [
               FaceCropperWidget(faceRect: face.rect, asset: face.asset, width: 50, height: 50, shape: BoxShape.circle),
-              if (face.personName.isNotEmpty)
-                Text(face.personName, style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey)),
+              Text(face.personName, style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey)),
             ],
           ),
         ),
