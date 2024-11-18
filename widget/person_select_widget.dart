@@ -5,19 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:app/helpers/toast.dart';
 
 class PersonSelectWidget extends StatefulWidget {
-  const PersonSelectWidget({Key? key, required this.people,required this.callback, required this.title, required this.hint, required this.okButtonText}) : super(key: key);
-  final String title, hint, okButtonText;
+  const PersonSelectWidget({Key? key, required this.people,required this.callback, required this.title, required this.hint, required this.okButtonText, required this.clearButtonText}) : super(key: key);
+  final String title, hint, okButtonText, clearButtonText;
   final List<FaceModel> people;
   final Function(int, String) callback;
 
   static void show({required  List<FaceModel> people, required Function (int personId, String personName) callback,
-    required BuildContext context, required String title, required String hint, required String okButtonText}) {
+    required BuildContext context, required String title, required String hint, required String okButtonText, required String clearButtonText}) {
 
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
-        return PersonSelectWidget(people: people, callback:callback, title: title, hint: hint, okButtonText:okButtonText);
+        return PersonSelectWidget(people: people, callback:callback, title: title, hint: hint, okButtonText:okButtonText, clearButtonText: clearButtonText);
       },
     );
   }
@@ -81,6 +81,13 @@ class _PersonSelectWidgetState extends State<PersonSelectWidget> {
         ),
       ),
       actions: <Widget>[
+        TextButton(
+          child: Text(widget.clearButtonText, style: const TextStyle(color: Colors.red)),
+          onPressed: () {
+            Navigator.of(context).pop();
+            widget.callback(0, "");
+          },
+        ),
         TextButton(
           child: Text(widget.okButtonText),
           onPressed: () {

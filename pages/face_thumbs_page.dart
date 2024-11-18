@@ -124,10 +124,11 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
     // Use PersonSelectWidget to select person for the face
     PersonSelectWidget.show(
       context: rootContext,
-      title: "Name",
+      title: widget.faceModel.personName.isNotEmpty ? widget.faceModel.personName : "Name",
       hint: ".. or select a person below",
       people: people,
       okButtonText: "Save",
+      clearButtonText: "Clear",
       callback: (personId, personName) async {
         if (personId == -1) {
           // Create new person
@@ -138,6 +139,18 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
           }
           // Reset the people list
           UserService.forAccount(widget.faceModel.asset.account).then((service) => service.resetPeople());
+        }
+        if (personId == 0) {
+          final result = await widget.faceModel.assignToPerson(0);
+          if (!result) {
+            Toast.show(msg: "Could not remove person from face", gravity: Toast.ToastGravityCenter);
+            return;
+          }
+          widget.faceModel.personName = "";
+          setState(() {
+            selected.clear();
+          });
+          return;
         }
         final success = await widget.faceModel.assignToPerson(personId);
         if (!success) {
@@ -175,13 +188,6 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
         onPressed: editDialog,
         child: const Icon(Icons.edit_outlined),
       ),
-      // const SizedBox(width: 5,),
-      // FloatingActionButton(
-      //   backgroundColor: AppConst.actionButtonColor,
-      //   heroTag: null,
-      //   onPressed: () => {}, //Album.share(widget.albumInfo as AlbumModel),
-      //   child: const Icon(Icons.share_outlined),
-      // ),
     ];
 
     final topButtons = Container(

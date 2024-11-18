@@ -230,6 +230,7 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
                               children: tags.take(100).map((TagModel value) {
                                 final isSelected = filters.contains(value);
                                 return FilterChip(
+                                  labelPadding: const EdgeInsets.symmetric(horizontal: 3.0),
                                   selectedColor: Colors.blue.withOpacity(0.6),
                                   label: Text(value.value),
                                   showCheckmark: false,
