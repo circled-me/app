@@ -39,6 +39,7 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
   final List<AssetModel> assets = [];
   final _nameCtrl = TextEditingController();
   final _scrollController = ScrollController();
+  double threshold = 0.11; // Default threshold for similarity
 
   static const double _baseHeaderHeight = 150;
   static const double _minHeaderHeight = 150;
@@ -70,11 +71,11 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
     }
   }
 
-  Future<List<AssetModel>> _getAssets() async {
+  Future<List<AssetModel>> _getAssets(double threshold) async {
     if (assets.isNotEmpty) {
       return assets;
     }
-    final result = await widget.faceModel.getAssets();
+    final result = await widget.faceModel.getAssets(threshold);
     for (final a in result) {
       assets.add(a);
     }
@@ -125,7 +126,7 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
     PersonSelectWidget.show(
       context: rootContext,
       title: widget.faceModel.personName.isNotEmpty ? widget.faceModel.personName : "Name",
-      hint: ".. or select a person below",
+      hint: "or select a person below",
       people: people,
       okButtonText: "Save",
       clearButtonText: "Clear",
@@ -140,26 +141,14 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
           // Reset the people list
           UserService.forAccount(widget.faceModel.asset.account).then((service) => service.resetPeople());
         }
-        if (personId == 0) {
-          final result = await widget.faceModel.assignToPerson(0);
-          if (!result) {
-            Toast.show(msg: "Could not remove person from face", gravity: Toast.ToastGravityCenter);
-            return;
-          }
-          widget.faceModel.personName = "";
-          setState(() {
-            selected.clear();
-          });
-          return;
-        }
-        final success = await widget.faceModel.assignToPerson(personId);
+        final success = await widget.faceModel.assignToPerson(personId, threshold);
         if (!success) {
-          Toast.show(msg: "Could not save person for the face", gravity: Toast.ToastGravityCenter);
+          Toast.show(msg: "Could not save face changes", gravity: Toast.ToastGravityCenter);
           return;
         }
-        widget.faceModel.personName = personName;
         Navigator.of(rootContext).pop();
         setState(() {
+          widget.faceModel.personName = personName;
           selected.clear();
         });
       });
@@ -273,7 +262,39 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
                           ),
                         ],
                       ),
-                    )],
+                    ),
+                    // Place one more Positioned at the bottom right as well
+                    Positioned(
+                      right: 7,
+                      bottom: 7,
+                      child: Column(
+                        children: [
+                          const Text("Resemblance", style: TextStyle(color: Colors.white, fontSize: 14)),
+                          const SizedBox(height: 5),
+                          // Create slider for similarity
+                          SliderTheme(
+                            data: SliderThemeData(
+                              overlayShape: SliderComponentShape.noOverlay,
+                              thumbColor: AppConst.mainColor,
+                            ),
+                            child: SizedBox(
+                              width: 120,
+                              child: Slider(
+                                value: 0.57-threshold,
+                                onChanged: (value) => setState(() {
+                                  threshold = 0.57-value;
+                                  assets.clear();
+                                }),
+                                min: 0.07,
+                                max: 0.5,
+                                divisions: 40,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    ],
                   )
               ),
             ),
@@ -310,7 +331,7 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
         ),
       ]);
     }
-    var futureAssets = _getAssets();
+    var futureAssets = _getAssets(threshold);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,

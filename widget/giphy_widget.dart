@@ -24,15 +24,15 @@ class GiphyWidget extends StatefulWidget {
 }
 
 class _GiphyWidgetState extends State<GiphyWidget> {
-  static const apiKey = "ziWgPzKfNGYdjjRMXAkD25a2turjN82T"; // TODO: Make this configurable
+  static const apiKey = String.fromEnvironment("GIPHY_API_KEY");
   late Future<Response> apiResponse;
 
   Future<Response> newApiRequest(String query) {
     final params = "?api_key=$apiKey&q=$query&limit=50&offset=0&rating=g&lang=en";
     if (query.isEmpty) {
-      return get(Uri.parse("https://"+(widget.stickers ? "api.giphy.com/v1/stickers/trending" : "api.giphy.com/v1/gifs/trending")+params));
+      return get(Uri.parse("https://api.giphy.com/v1/"+(widget.stickers ? "stickers" : "gifs")+"/trending"+params));
     }
-    return get(Uri.parse("https://"+(widget.stickers ? "api.giphy.com/v1/stickers/search" : "api.giphy.com/v1/gifs/search")+params));
+    return get(Uri.parse("https://api.giphy.com/v1/"+(widget.stickers ? "stickers" : "gifs")+"/search"+params));
   }
   @override
   void initState() {
@@ -83,7 +83,7 @@ class _GiphyWidgetState extends State<GiphyWidget> {
             child: Container(
               color: Colors.white,
               child: FutureBuilder<Response>(future: apiResponse, builder: (context, snapshot) {
-                if (snapshot == null || snapshot.connectionState != ConnectionState.done) {
+                if (snapshot.data == null || snapshot.connectionState != ConnectionState.done) {
                   return Center(child: CircularProgressIndicator(color: Colors.grey.withOpacity(0.25)));
                 }
                 // TODO: Handle errors
