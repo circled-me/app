@@ -6,7 +6,6 @@ import 'package:app/helpers/toast.dart';
 import 'package:app/main.dart';
 import 'package:app/models/asset_base_model.dart';
 import 'package:app/models/asset_model.dart';
-import 'package:app/models/face_model.dart';
 import 'package:app/pages/face_thumbs_page.dart';
 import 'package:app/widget/nicely_dismissable_widget.dart';
 import 'package:flutter/material.dart';
@@ -68,23 +67,24 @@ class _SimpleGalleryState extends State<SimpleGallery> {
   }
 
   Future<List<Widget>?> _getFaces(AssetBaseModel asset) async {
-    print("getFaces");
     if (asset is! AssetModel) {
       return null;
     }
-    print("getFaces2");
-    AssetModel a = asset as AssetModel;
-    var faces = await a.getFaces();
+    var faces = await asset.getFaces();
     var result = <Widget>[];
     for (var face in faces!) {
       result.add(GestureDetector(
         onTap: () {
-          // Open face details (FaceThumbsPage)
           Navigator.of(context).push(MaterialPageRoute(builder: (context) => FaceThumbsPage(faceModel: face)));
         },
         child: Padding(
           padding: const EdgeInsets.only(left: 7),
-          child: FaceCropperWidget(faceRect: face.rect, asset: face.asset, width: 50, height: 50, shape: BoxShape.rectangle),
+          child: Column(
+            children: [
+              FaceCropperWidget(faceRect: face.rect, asset: face.asset, width: 50, height: 50, shape: BoxShape.circle),
+              Text(face.personName, style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey)),
+            ],
+          ),
         ),
       ));
     }
@@ -129,7 +129,7 @@ class _SimpleGalleryState extends State<SimpleGallery> {
         return const SizedBox();
       }
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.only(top: 10),
         child: Row(
           children: [
             const SizedBox(height: 10),
@@ -198,14 +198,11 @@ class _SimpleGalleryState extends State<SimpleGallery> {
                             ],
                           ),
                         ),
-                        if (currentAsset.location != null)
-                          const SizedBox(height: 5),
                         if (currentAsset.location != null && currentAsset.gpsLat != null && currentAsset.gpsLong != null)
                           TextButton(
                             onPressed: () => openMapLink(currentAsset),
                             child: Text(currentAsset.location!, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.blue)),
                           ),
-                        const SizedBox(height: 15),
                         if (currentAsset.gpsLat != null && currentAsset.gpsLong != null)
                           Expanded(child: buildMap(currentAsset)),
                       ],

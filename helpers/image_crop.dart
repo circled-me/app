@@ -118,3 +118,21 @@ class FaceCropperWidget extends StatelessWidget {
     );
   }
 }
+
+class FaceClipper extends CustomClipper<Rect> {
+    final Rect faceRect;
+    FaceClipper(this.faceRect);
+
+    @override
+    Rect getClip(Size size) {
+      print(faceRect.left);
+      print(faceRect.top);
+      print(faceRect.width);
+      print(faceRect.height);
+      return Rect.fromLTWH(faceRect.left, faceRect.top, faceRect.width, faceRect.height);
+    }
+    @override
+    bool shouldReclip(CustomClipper<Rect> oldClipper) {
+      return false;
+    }
+}

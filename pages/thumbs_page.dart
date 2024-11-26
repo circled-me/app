@@ -230,6 +230,7 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
                               children: tags.take(100).map((TagModel value) {
                                 final isSelected = filters.contains(value);
                                 return FilterChip(
+                                  labelPadding: const EdgeInsets.symmetric(horizontal: 3.0),
                                   selectedColor: Colors.blue.withOpacity(0.6),
                                   label: Text(value.value),
                                   showCheckmark: false,
@@ -279,8 +280,8 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
                           backgroundColor: AppConst.actionButtonColor,
                           heroTag: null,
                           onPressed: () {
-                            filters.clear();
-                            assetFilter.clear();
+                            filters = [];
+                            assetFilter = SplayTreeSet<int>();
                             Navigator.of(context).pop();
                           },
                           child: const Icon(Icons.clear),
@@ -360,7 +361,7 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
       if (account == null || !accounts.contains(account)) {
         account = accounts.first;
       }
-      assetLoader = assetsService.getAssets(account!);
+      assetLoader = assetsService.getAssets(account!, false);
     }
     List<Widget> actions = [];
     if (account != null) {
@@ -407,14 +408,25 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
             IconButton(
               onPressed: () =>
                   setState(() {
-                    filters.clear();
-                    assetFilter.clear();
+                    filters = [];
+                    assetFilter = SplayTreeSet<int>();
                     ThumbsPage.scrollController.animateTo(0,
                       duration: const Duration(milliseconds: 500),
                       curve: Curves.ease,
                     );
                   }),
               icon: const Icon(Icons.clear),
+            ),
+          ]);
+        } else {
+          // Add refresh button
+          actions.addAll([
+            const SizedBox(width: 10,),
+            IconButton(
+              onPressed: () => setState(() {
+                assetLoader = assetsService.getAssets(account!, true);
+              }),
+              icon: const Icon(Icons.refresh),
             ),
           ]);
         }

@@ -46,8 +46,8 @@ class FaceModel {
   String get name => personName.isEmpty ? "<unknown>" : personName;
   String get tag => "FaceTag-"+asset.account.identifier+"-"+id.toString();
 
-  Future<List<AssetModel>> getAssets() async {
-    final result = await asset.account.apiClient.get("/asset/list?threshold=0.25&face_id=" + id.toString());
+  Future<List<AssetModel>> getAssets(double threshold) async {
+    final result = await asset.account.apiClient.get("/asset/list?threshold=" + threshold.toString() + "&face_id=" + id.toString());
     if (result.status != 200) {
       return [];
     }
@@ -57,5 +57,31 @@ class FaceModel {
       assets.add(AssetModel.fromAccountJson(asset.account, j));
     }
     return assets;
+  }
+
+  Future<bool> assignToPerson(int personId, double threshold) async {
+    final result = await asset.account.apiClient.post("/faces/assign?threshold="+threshold.toString() , body: jsonEncode({
+      "id": id,
+      "person_id": personId
+    }));
+    if (result.status != 200) {
+      return false;
+    }
+    this.personId = personId;
+    return true;
+  }
+
+  Future<int> createPerson(String name) async {
+    final result = await asset.account.apiClient.post("/faces/create-person", body: jsonEncode({
+      "id": id,
+      "person_name": name
+    }));
+    if (result.status != 200) {
+      return 0;
+    }
+    final json = jsonDecode(result.body);
+    personName = name;
+    personId = json["person_id"];
+    return personId;
   }
 }

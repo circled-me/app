@@ -20,6 +20,10 @@ class User {
 
 
   static String _addProtocol(String url) {
+    // If the url starts with a number and a dot, it's probably a local IP address so we prefix it with http:// by default
+    if (url.startsWith(RegExp("[0-9]+\\."))) {
+      return "http://"+url;
+    }
     if (!url.toLowerCase().startsWith("https://") && !url.toLowerCase().startsWith("http://")) {
       return "https://"+url;
     }
@@ -36,7 +40,7 @@ class User {
         "password": password,
         "new": newServer,
       }),
-    );
+    ).timeout(const Duration(seconds: 10));
     print(response.status);
     print(response.body);
     print(response.cookie);

@@ -1,3 +1,4 @@
+import 'package:app/app_consts.dart';
 import 'package:app/helpers/user.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
 import 'package:app/helpers/toast.dart';
@@ -195,6 +196,9 @@ class _LoginPageState extends State<LoginPage>
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppConst.borderRadius))),
                       onPressed: _doLogin,
                       child: Text(loginType > normalLogin ? "Create User" : "Login", style: const TextStyle(fontSize: 18)),
                     ),

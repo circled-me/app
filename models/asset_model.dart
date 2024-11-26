@@ -101,7 +101,7 @@ class AssetModel extends AssetBaseModel {
   }
 
   Future<void> _loadFaces() async {
-    final result = await account.apiClient.get("/asset/faces?asset_id="+id.toString());
+    final result = await account.apiClient.get("/faces/for-asset?asset_id="+id.toString());
     if (result.status == 200) {
       final json = jsonDecode(result.body);
       faces = [];

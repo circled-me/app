@@ -18,19 +18,19 @@ class AssetsService extends ChangeNotifier {
   final Map<AccountModel, Future<List<TagModel>>> _tagsPending = {};
   static final AssetsService instance = AssetsService._();
 
-  Future<List<AssetModel>> getAssets(AccountModel account) async {
+  Future<List<AssetModel>> getAssets(AccountModel account, bool forceReload) async {
     // Is there a pending reload for this account?
-    if (_assetsPending.containsKey(account) && _assetsPending[account] != null) {
+    if (!forceReload && _assetsPending.containsKey(account) && _assetsPending[account] != null) {
       print("pending load of assets...");
       return _assetsPending[account]!;
     }
-    if (_assets.containsKey(account) && _assets[account] != null && _assets[account]!.isNotEmpty) {
+    if (!forceReload && _assets.containsKey(account) && _assets[account] != null && _assets[account]!.isNotEmpty) {
       print("from loaded assets...");
       return _assets[account]!;
     }
     print("new load of assets...");
-    _tagsPending[account] = _fetchTags(account); // TODO: Change?
-    return _assetsPending[account] = _fetchAssets(account);
+    _tagsPending[account] = _fetchTags(account, forceReload); // TODO: Change?
+    return _assetsPending[account] = _fetchAssets(account, forceReload);
   }
 
   Future<List<TagModel>> getTags(AccountModel account) async {
@@ -44,11 +44,11 @@ class AssetsService extends ChangeNotifier {
       return _tags[account]!;
     }
     print("new load of tags...");
-    return _tagsPending[account] = _fetchTags(account);
+    return _tagsPending[account] = _fetchTags(account, false);
   }
 
-  Future<List<TagModel>> _fetchTags(AccountModel account) async {
-    final result = await account.apiClient.get("/asset/tags");
+  Future<List<TagModel>> _fetchTags(AccountModel account, bool forceReload) async {
+    final result = await account.apiClient.get("/asset/tags"+(forceReload?"?reload=1":""));
     if (result.status != 200) {
       return [];
     }
@@ -60,8 +60,8 @@ class AssetsService extends ChangeNotifier {
     return tags;
   }
 
-  Future<List<AssetModel>> _fetchAssets(AccountModel account) async {
-    final result = await account.apiClient.get("/asset/list");
+  Future<List<AssetModel>> _fetchAssets(AccountModel account, bool forceReload) async {
+    final result = await account.apiClient.get("/asset/list"+(forceReload?"?reload=1":""));
     if (result.status != 200) {
       return [];
     }
@@ -77,8 +77,8 @@ class AssetsService extends ChangeNotifier {
 
   Future<void> reloadAccounts(AccountsService accountsService) async {
     for (final account in accountsService.accounts) {
-      _assetsPending[account] = _fetchAssets(account);
-      _tagsPending[account] = _fetchTags(account);
+      _assetsPending[account] = _fetchAssets(account, false);
+      _tagsPending[account] = _fetchTags(account, false);
     }
   }
 
