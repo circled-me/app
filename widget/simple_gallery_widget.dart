@@ -203,7 +203,6 @@ class _SimpleGalleryState extends State<SimpleGallery> {
                             onPressed: () => openMapLink(currentAsset),
                             child: Text(currentAsset.location!, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.blue)),
                           ),
-                        // const SizedBox(height: 15),
                         if (currentAsset.gpsLat != null && currentAsset.gpsLong != null)
                           Expanded(child: buildMap(currentAsset)),
                       ],
