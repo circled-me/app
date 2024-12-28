@@ -63,22 +63,28 @@ class Album {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('Share in...'),
-                ElevatedButton(
-                  child: const Text('Chat group'),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    Group.share(albumInfo.account.server+info["path"]);
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    child: const Text('Chat Group'),
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      Group.share(albumInfo.account.server+info["path"]);
+                    },
+                  ),
                 ),
-                ElevatedButton(
-                  child: const Text('Another application'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Share.share((albumInfo.hidden?"":info["title"] + ":\n") + albumInfo.account.server+info["path"],
-                      subject: info["title"],
-                      sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
-                    );
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    child: const Text('Another Application'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Share.share((albumInfo.hidden?"":info["title"] + ":\n") + albumInfo.account.server+info["path"],
+                        subject: info["title"],
+                        sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
+                      );
+                    },
+                  ),
                 ),
               ],
             ),

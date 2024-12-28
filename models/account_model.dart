@@ -168,4 +168,8 @@ class AccountModel {
     updatePushServer();
     return true;
   }
+
+  Future<ApiResponse> getCallPath(bool reset) async {
+    return apiClient.get("/user/video-link?reset=${reset ? "1" : "0"}");
+  }
 }
