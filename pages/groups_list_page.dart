@@ -12,7 +12,6 @@ import 'package:app/widget/multi_user_widget.dart';
 import 'package:app/helpers/toast.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:app/widget/webview_dialog_widget.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
@@ -66,16 +65,13 @@ class _GroupsListPageState extends State<GroupsListPage> {
   Future<void> shareLink(AccountModel account, bool reset) async {
     final linkResponse = await account.getCallPath(reset);
     if (linkResponse.status != 200) {
-      Toast.show(msg: "Couldn't get call link: ${linkResponse.status}");
+      Toast.show(msg: "Couldn't get call link: ${linkResponse.status} ${linkResponse.body}");
       return;
     }
     final path = jsonDecode(linkResponse.body)["path"];
-    final result = await Share.share("Join my call: ${account.server + path}",
+    final result = await Share.share("Join my call:\n${account.server + path}",
       sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
     );
-    // if (result.status == ShareResultStatus.success) {
-    //   startCall(account);
-    // }
   }
 
   void openVideoCallView(String url) {
@@ -145,7 +141,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
   Future<void> startCall(AccountModel account) async {
     final pathResponse = await account.getCallPath(false);
     if (pathResponse.status != 200) {
-      Toast.show(msg: "Couldn't get call link: ${pathResponse.status}");
+      Toast.show(msg: "Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
       return;
     }
     final path = jsonDecode(pathResponse.body)["path"];
@@ -161,12 +157,12 @@ class _GroupsListPageState extends State<GroupsListPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Start a call"),
+        title: const Text("Video Call"),
         content: StatefulBuilder(builder: (context, setState) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Would you like to create a new call or share an existing one?"),
+              const Text("Share the call link with the other participants and then join the call."),
               const SizedBox(height: 10),
               CheckboxListTile(
                 visualDensity: VisualDensity.compact,
