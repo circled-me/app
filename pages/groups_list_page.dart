@@ -69,7 +69,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
       return;
     }
     final path = jsonDecode(linkResponse.body)["path"];
-    final result = await Share.share("Join my call:\n${account.server + path}",
+    final result = await Share.share(account.server + path,
       sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
     );
   }
@@ -145,7 +145,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
       return;
     }
     final path = jsonDecode(pathResponse.body)["path"];
-    openVideoCallView(account.server + path);
+    openVideoCallView("${account.server + path}#inapp");
   }
 
   Future<void> createNewCall(BuildContext context) async {
