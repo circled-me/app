@@ -93,6 +93,7 @@ class _SimpleGalleryState extends State<SimpleGallery> {
 
   Widget buildMap(AssetBaseModel asset) => FlutterMap(
       options: MapOptions(
+
         initialCenter: latlong2.LatLng(asset.gpsLat!, asset.gpsLong!),
         initialZoom: 16,
         // interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,

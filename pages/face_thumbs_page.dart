@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 import 'package:app/app_consts.dart';
 import 'package:app/helpers/asset.dart';
 import 'package:app/helpers/asset_actions.dart';
@@ -39,7 +40,7 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
   final List<AssetModel> assets = [];
   final _nameCtrl = TextEditingController();
   final _scrollController = ScrollController();
-  double threshold = 0.11; // Default threshold for similarity
+  double threshold = sqrt(0.11); // Default threshold for similarity
 
   static const double _baseHeaderHeight = 150;
   static const double _minHeaderHeight = 150;
@@ -268,28 +269,41 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
                       right: 7,
                       bottom: 7,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Text("Resemblance", style: TextStyle(color: Colors.white, fontSize: 14)),
-                          const SizedBox(height: 5),
-                          // Create slider for similarity
-                          SliderTheme(
-                            data: SliderThemeData(
-                              overlayShape: SliderComponentShape.noOverlay,
-                              thumbColor: AppConst.mainColor,
-                            ),
-                            child: SizedBox(
-                              width: 120,
-                              child: Slider(
-                                value: 0.57-threshold,
-                                onChanged: (value) => setState(() {
-                                  threshold = 0.57-value;
-                                  assets.clear();
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                padding: EdgeInsets.only(right: 9),
+                                constraints: BoxConstraints(),
+                                icon: const Icon(Icons.remove, color: AppConst.mainColor),
+                                onPressed: () => setState(() {
+                                  if (threshold < 0.90) {
+                                    threshold += 0.01;
+                                    assets.clear();
+                                  }
                                 }),
-                                min: 0.07,
-                                max: 0.5,
-                                divisions: 40,
                               ),
-                            ),
+                              Text(
+                                "${(100-100*threshold).toStringAsFixed(0)}%",
+                                style: const TextStyle(color: Colors.white, fontSize: 14),
+                              ),
+                              IconButton(
+                                padding: EdgeInsets.only(left: 8),
+                                constraints: BoxConstraints(),
+                                icon: const Icon(Icons.add, color: AppConst.mainColor),
+                                onPressed: () => setState(() {
+                                  if (threshold > 0.05) {
+                                    threshold -= 0.01;
+                                    assets.clear();
+                                  }
+                                }),
+                              ),
+                            ],
                           ),
                         ],
                       ),

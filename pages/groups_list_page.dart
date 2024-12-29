@@ -162,7 +162,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Share the call link with the other participants and then join the call."),
+              const Text("Share the call link with the other participants and then join the call.\n\nThe link will be valid unless explicitly reset."),
               const SizedBox(height: 10),
               CheckboxListTile(
                 visualDensity: VisualDensity.compact,
@@ -237,8 +237,8 @@ class _GroupsListPageState extends State<GroupsListPage> {
         }
       },
       context: context,
-      title: "Create Group",
-      hint: "Tap on a User's name to add them to the group. Twice to make them an admin.",
+      title: "Create Room",
+      hint: "Tap on a User's name to add them to the room. Twice to make them an admin.",
       okButtonText: "Create"
     );
   }
@@ -263,7 +263,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
           }
           final groupsToRender = snapshot.data!;
           if (groupsToRender.isEmpty) {
-            return const Center(child: EmptyInfoWidget(Icons.group, "You haven't been invited\nto any groups yet..."));
+            return const Center(child: EmptyInfoWidget(Icons.group, "You haven't been invited\nto any rooms yet..."));
           }
           return GridView.builder(
             controller: GroupsListPage.scrollController,
@@ -368,6 +368,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
           FloatingActionButton(
             backgroundColor: Colors.white,
             foregroundColor: AppConst.mainColor,
+            heroTag: null,
             onPressed: () => createNewGroup(context),
             child: const Icon(Icons.add, size: 30,),
           ),
@@ -375,6 +376,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
           FloatingActionButton(
             backgroundColor: Colors.white,
             foregroundColor: AppConst.mainColor,
+            heroTag: null,
             onPressed: () => createNewCall(context),
             child: const Icon(Icons.videocam_rounded, size: 30,),
           ),

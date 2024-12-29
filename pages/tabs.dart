@@ -242,8 +242,8 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
       FlutterAppBadger.updateBadgeCount(numUnreadGroups);
       groupsIcon = Badge(
         label: Text(numUnreadGroups.toString()),
-        child: groupsIcon,
         backgroundColor: Colors.deepOrange,
+        child: groupsIcon,
       );
     } else {
       FlutterAppBadger.removeBadge();
@@ -257,7 +257,7 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
     if (!accounts.isEmpty) {
       tabs.add(BottomNavigationBarItem(
         icon: groupsIcon,
-        label: 'Chats',
+        label: 'Connect',
       ));
     }
     tabs.add(const BottomNavigationBarItem(

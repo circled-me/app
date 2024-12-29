@@ -105,6 +105,7 @@ class _UserListPageState extends State<UserListPage> {
       floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterFloat,
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
+        heroTag: null,
         foregroundColor: AppConst.mainColor,
         onPressed: () => EditUserWidget.show(UserModel.empty(widget.account), (success) => { if(success) setState(() {})}, context, "", ""),
         child: const Icon(Icons.add),
