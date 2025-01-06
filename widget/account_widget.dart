@@ -3,12 +3,10 @@ import 'package:app/main.dart';
 import 'package:app/models/user_model.dart';
 import 'package:app/pages/bucket_list_page.dart';
 import 'package:app/pages/user_list_page.dart';
-import 'package:app/services/bucket_service.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:app/widget/account_backup_widget.dart';
 import 'package:expandable/expandable.dart';
 import 'package:provider/provider.dart';
-
 import '../services/accounts_service.dart';
 import '../models/account_model.dart';
 import '../pages/login_page.dart';

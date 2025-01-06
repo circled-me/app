@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:app/app_consts.dart';
 import 'package:app/helpers/user.dart';
+import 'package:app/main.dart';
 import 'package:app/models/group_user_model.dart';
 import 'package:app/pages/group_feed_page.dart';
 import 'package:app/services/user_service.dart';
@@ -10,6 +11,11 @@ import 'package:app/widget/empty_info_widget.dart';
 import 'package:app/widget/multi_user_widget.dart';
 import 'package:app/helpers/toast.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:app/widget/webview_dialog_widget.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import '../models/account_model.dart';
 import '../models/group_model.dart';
@@ -38,20 +44,168 @@ class _GroupsListPageState extends State<GroupsListPage> {
     super.dispose();
   }
 
-  Future<void> createNewGroup(BuildContext context) async {
-    // TODO: Select account
+  Future<AccountModel?> selectAccount(BuildContext context) async {
     AccountModel account;
     if (AccountsService.getAccounts.isEmpty) {
       Toast.show(msg: "You need to add an account first");
-      return;
+      return null;
     } else if (AccountsService.getAccounts.length == 1) {
       account = AccountsService.getAccounts.first;
     } else {
       final selected = await User.switchAccount(AccountsService.getAccounts.first);
       if (selected == null) {
-        return;
+        Toast.show(msg: "You need to select an account");
+        return null;
       }
       account = selected!;
+    }
+    return account;
+  }
+
+  Future<void> shareLink(AccountModel account, bool reset) async {
+    final linkResponse = await account.getCallPath(reset);
+    if (linkResponse.status != 200) {
+      Toast.show(msg: "Couldn't get call link: ${linkResponse.status} ${linkResponse.body}");
+      return;
+    }
+    final path = jsonDecode(linkResponse.body)["path"];
+    final result = await Share.share(account.server + path,
+      sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
+    );
+  }
+
+  void openVideoCallView(String url) {
+    final rootContext = MyApp.navigatorKey.currentState!.context;
+    late final PlatformWebViewControllerCreationParams params;
+    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
+      params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+    final controller = WebViewController.fromPlatformCreationParams(
+      params,
+      onPermissionRequest: (request) => request.grant(),
+    )
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.black)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            print("WebView is loading (progress : $progress%)");
+          },
+          onPageStarted: (String url) {
+            print('Page started loading: $url');
+          },
+          onPageFinished: (String url) {
+            print('Page finished loading: $url');
+          },
+          onHttpError: (HttpResponseError error) {
+            print('HTTP error: $error');
+          },
+          onWebResourceError: (WebResourceError error) {
+            print('Web Resource error: $error');
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            print('Navigation Request: $request');
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
+    if (controller.platform is AndroidWebViewController) {
+      // AndroidWebViewController.enableDebugging(true);
+      (controller.platform as AndroidWebViewController)
+          .setMediaPlaybackRequiresUserGesture(false);
+    }
+    controller.clearCache();
+    // Finally, load the URL
+    controller.loadRequest(Uri.parse(url));
+
+    showDialog(
+      context: rootContext,
+      barrierDismissible: true,
+
+      builder: (BuildContext context) {
+        return WebViewDialog(controller: controller);
+      },
+    );
+  }
+
+  // void getVoipToken() async {
+  //   final token =  await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+  //   print("VOIP Token: $token");
+  // }
+
+  Future<void> startCall(AccountModel account) async {
+    final pathResponse = await account.getCallPath(false);
+    if (pathResponse.status != 200) {
+      Toast.show(msg: "Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
+      return;
+    }
+    final path = jsonDecode(pathResponse.body)["path"];
+    openVideoCallView("${account.server + path}#inapp");
+  }
+
+  Future<void> createNewCall(BuildContext context) async {
+    late bool resetCheckbox = false;
+    final account = await selectAccount(context);
+    if (account == null) {
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Video Call"),
+        content: StatefulBuilder(builder: (context, setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Share the call link with the other participants and then join the call.\n\nThe link will be valid unless explicitly reset."),
+              const SizedBox(height: 10),
+              CheckboxListTile(
+                visualDensity: VisualDensity.compact,
+                title: const Text("Reset Link"),
+                value: resetCheckbox,
+                onChanged: (value) => setState(() {
+                  resetCheckbox = value!;
+                }),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  child: const Text("Share Call Link"),
+                  onPressed: () {
+                    shareLink(account, resetCheckbox);
+                  }
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConst.attentionColor,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    startCall(account);
+                  },
+                  child: const Text("Join Call"),
+                ),
+              ),
+            ]
+          );
+        }
+      ),
+    ),
+    );
+  }
+
+  Future<void> createNewGroup(BuildContext context) async {
+    final account = await selectAccount(context);
+    if (account == null) {
+      return;
     }
     // Fetch all users
     showDialog(context: context, builder: (context) => const Center(child: CircularProgressIndicator()),);
@@ -83,8 +237,8 @@ class _GroupsListPageState extends State<GroupsListPage> {
         }
       },
       context: context,
-      title: "Create Group",
-      hint: "Tap on a User's name to add them to the group. Twice to make them an admin.",
+      title: "Create Room",
+      hint: "Tap on a User's name to add them to the room. Twice to make them an admin.",
       okButtonText: "Create"
     );
   }
@@ -109,7 +263,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
           }
           final groupsToRender = snapshot.data!;
           if (groupsToRender.isEmpty) {
-            return const Center(child: EmptyInfoWidget(Icons.group, "You haven't been invited\nto any groups yet..."));
+            return const Center(child: EmptyInfoWidget(Icons.group, "You haven't been invited\nto any rooms yet..."));
           }
           return GridView.builder(
             controller: GroupsListPage.scrollController,
@@ -208,11 +362,25 @@ class _GroupsListPageState extends State<GroupsListPage> {
         }
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterFloat,
-      floatingActionButton: !AccountsService.getAccounts.first.canCreateGroups() ? null : FloatingActionButton(
-        backgroundColor: Colors.white,
-        foregroundColor: AppConst.mainColor,
-        onPressed: () => createNewGroup(context),
-        child: const Icon(Icons.add),
+      floatingActionButton: !AccountsService.getAccounts.first.canCreateGroups() ? null : Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FloatingActionButton(
+            backgroundColor: Colors.white,
+            foregroundColor: AppConst.mainColor,
+            heroTag: null,
+            onPressed: () => createNewGroup(context),
+            child: const Icon(Icons.add, size: 30,),
+          ),
+          const SizedBox(width: 15),
+          FloatingActionButton(
+            backgroundColor: Colors.white,
+            foregroundColor: AppConst.mainColor,
+            heroTag: null,
+            onPressed: () => createNewCall(context),
+            child: const Icon(Icons.videocam_rounded, size: 30,),
+          ),
+        ],
       ),
     );
   }

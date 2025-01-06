@@ -57,30 +57,39 @@ class Album {
       builder: (context) {
         return SizedBox(
           height: 200,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Share in...'),
-                ElevatedButton(
-                  child: const Text('Chat group'),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    Group.share(albumInfo.account.server+info["path"]);
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text('Another application'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Share.share((albumInfo.hidden?"":info["title"] + ":\n") + albumInfo.account.server+info["path"],
-                      subject: info["title"],
-                      sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
-                    );
-                  },
-                ),
-              ],
+          child: Padding(
+            padding: const EdgeInsets.only(left: 10.0, right: 10.0),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Share in...'),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      child: const Text('Chat Group'),
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        Group.share(albumInfo.account.server+info["path"]);
+                      },
+                    ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      child: const Text('Another Application'),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Share.share((albumInfo.hidden?"":info["title"] + ":\n") + albumInfo.account.server+info["path"],
+                          subject: info["title"],
+                          sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

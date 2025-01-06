@@ -98,12 +98,12 @@ class _SelectOrAddAlbumWidgetState extends State<SelectOrAddAlbumWidget> {
           isDense: false,
           hint: Text(widget.hint),
           value: currentSelectedValue > 0 ? currentSelectedValue : null,
-          onChanged: (newValue) => setState(() => {
+          onChanged: (newValue) => setState(() {
             if (newValue!=null && newValue == 0) {
-              createNewDialog()
+              createNewDialog();
             } else {
-              currentSelectedValue = newValue ?? 0
-            }
+              currentSelectedValue = newValue ?? 0;
+            };
           }),
           items: items,
         ),
@@ -111,10 +111,10 @@ class _SelectOrAddAlbumWidgetState extends State<SelectOrAddAlbumWidget> {
 
       actions: <Widget>[
         TextButton(
-          child: const Text('ADD'),
+          child: currentSelectedValue > 0 ? const Text('ADD') : const Text('NEW'),
           onPressed: () {
             if (currentSelectedValue <= 0) {
-              Toast.show(msg: "Please select Album");
+              createNewDialog();
               return;
             }
             widget.callback(currentSelectedValue);

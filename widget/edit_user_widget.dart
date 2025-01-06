@@ -164,7 +164,7 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
                 _buildCheckbox("Admin", "Has all permissions", UserModel.permissionAdmin),
                 _buildCheckbox("Upload assets", "Can upload and create albums", UserModel.permissionPhotoUpload),
                 _buildCheckbox("Asset backup", "Can backup", UserModel.permissionPhotoBackup, enabled: widget.user.permissions.contains(UserModel.permissionPhotoUpload)),
-                _buildCheckbox("Create groups", "Can create new groups", UserModel.permissionCanCreateGroups),
+                _buildCheckbox("Create rooms", "Can create new rooms", UserModel.permissionCanCreateGroups),
               ],
             ),
           ),

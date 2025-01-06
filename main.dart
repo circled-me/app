@@ -306,6 +306,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: AppConst.mainColor,
+          useMaterial3: false,
         ),
         home: const TabsPage()
       ),

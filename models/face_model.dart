@@ -47,7 +47,7 @@ class FaceModel {
   String get tag => "FaceTag-"+asset.account.identifier+"-"+id.toString();
 
   Future<List<AssetModel>> getAssets(double threshold) async {
-    final result = await asset.account.apiClient.get("/asset/list?threshold=" + threshold.toString() + "&face_id=" + id.toString());
+    final result = await asset.account.apiClient.get("/asset/list?threshold=${threshold*threshold}&face_id=$id");
     if (result.status != 200) {
       return [];
     }

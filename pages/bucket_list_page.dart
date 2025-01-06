@@ -108,6 +108,7 @@ class _BucketListPageState extends State<BucketListPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
         foregroundColor: AppConst.mainColor,
+        heroTag: null,
         onPressed: () => EditBucketWidget.show(BucketModel.empty(widget.account), (success) => { if(success) setState(() {})}, context, "", ""),
         child: const Icon(Icons.add),
       ),

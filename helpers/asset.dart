@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:path/path.dart' as path;
-import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 import 'package:image/image.dart';
 
 class Asset {
@@ -70,7 +70,7 @@ class Asset {
         //   print("Locally available");
         // }
         if (assets[index].isImage) {
-          await PhotoManager.editor.saveImage(download.readAsBytesSync(), title: assets[index].name);
+          await PhotoManager.editor.saveImage(download.readAsBytesSync(), title: assets[index].name, filename: assets[index].name);
         } else if (assets[index].isVideo) {
           await PhotoManager.editor.saveVideo(download, title: assets[index].name);
         } else {
@@ -153,9 +153,9 @@ class Asset {
   static Future<Uint8List?> _getThumbFor(XFile file) {
     final lcName = file.name.toLowerCase();
     if (lcName.endsWith(".mp4") || lcName.endsWith(".mov")) {
-      return VideoThumbnail.thumbnailData(
+      return vt.VideoThumbnail.thumbnailData(
         video: file.path,
-        imageFormat: ImageFormat.JPEG,
+        imageFormat: vt.ImageFormat.JPEG,
         maxWidth: 1280,
         quality: 90,
       );
