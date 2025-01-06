@@ -22,7 +22,7 @@ class _WebViewDialogState extends State<WebViewDialog> {
             right: 8,
             child: IconButton(
               color: Colors.white,
-              icon: Icon(Icons.close),
+              icon: Icon(Icons.close, size: 35,),
               onPressed: () async {
                 await widget.controller.loadHtmlString("<html></html>");
                 Navigator.of(context).pop();
