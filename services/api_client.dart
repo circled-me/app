@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:app/main.dart';
@@ -18,6 +19,7 @@ class ApiResponse {
 class ApiClient {
   static const statusException = 666;
   static const cookieName = "token";
+  static const timeoutDuration = Duration(seconds: 10);
   final String baseUrl;
   final _httpClient = http.Client();
   late CacheManager _cacheManager;
@@ -27,13 +29,12 @@ class ApiClient {
     _cacheManager = CacheManager(
       Config(
         key,
-        stalePeriod: const Duration(days: 7),
-        maxNrOfCacheObjects: 100,
+        stalePeriod: const Duration(days: 14),
+        maxNrOfCacheObjects: 10000,
         fileService: HttpFileService(httpClient: _httpClient),
         repo: JsonCacheInfoRepository(databaseName: key),
       ),
     );
-    // _cacheManager.emptyCache();
   }
 
   static final generic = ApiClient("");
@@ -59,7 +60,7 @@ class ApiClient {
   Future<WebSocket?> connectWebSocket(String uri) async {
     final url = httpToWs(fixURI(uri));
     try {
-      return await WebSocket.connect(url, headers: importantHeaders).timeout(const Duration(seconds: 10));
+      return await WebSocket.connect(url, headers: importantHeaders).timeout(timeoutDuration);
     } catch (e) {
       print("connectWebSocket exception: $e");
       return null;
@@ -67,18 +68,19 @@ class ApiClient {
   }
 
   get importantHeaders => {
-    "Cookie": cookieName + "=" + token,
+    "Cookie": "$cookieName=$token",
     "X-Version": MyApp.version,
   };
 
   // get requests are always cached
   Future<ApiResponse> get(String uriString, {Map<String,String>? params, bool asFile=false}) async {
     try {
+      print("GET URL $uriString");
       final uri = Uri.parse(fixURI(uriString)).replace(queryParameters: params);
-      final response = await _cacheManager.getSingleFile(uri.toString(), headers: importantHeaders);
+      final response = await _cacheManager.getSingleFile(uri.toString(), headers: importantHeaders).timeout(timeoutDuration);
       final success = await response.exists();
       if (!success) {
-        print("GET URL "+uri.toString()+" not successful?!");
+        print("GET URL $uri not successful?!");
         return const ApiResponse(404, "File does not exist?", null);
       }
       if (asFile) {
@@ -87,15 +89,19 @@ class ApiClient {
       return ApiResponse(200, response.readAsStringSync(), null);
     }
     on HttpExceptionWithStatus catch (e) {
-      print("HttpExceptionWithStatus:"+e.toString());
+      print("HttpExceptionWithStatus:$e");
       return ApiResponse(e.statusCode, jsonEncode({"error": e.toString()}), null);
     }
+    on TimeoutException catch (e) {
+      print("TimeoutException:$e");
+      return ApiResponse(408, jsonEncode({"error": e.toString()}), null);
+    }
     on Exception catch (e) {
-      print("Exception:"+e.toString());
+      print("Exception:$e");
       return ApiResponse(statusException, jsonEncode({"error": e.toString()}), null);
     }
     catch (e) {
-      print("ERROR:"+e.toString());
+      print("ERROR:$e");
       return ApiResponse(statusException, jsonEncode({"error": e.toString()}), null);
     }
   }
@@ -133,11 +139,11 @@ class ApiClient {
       }
       final response = await httpMethod(uri, headers: finalHeaders, body: body);
       if (response.statusCode >= 400) {
-        print("URL " + uri.toString() + " not successful, status and response: " + response.statusCode.toString() + "; " + response.body);
+        print("URL $uri not successful, status and response: ${response.statusCode}; ${response.body}");
       }
       return ApiResponse(response.statusCode, response.body, _readCookieFrom(response));
     } on HttpExceptionWithStatus catch (e) {
-      print("HttpExceptionWithStatus:"+e.toString());
+      print("HttpExceptionWithStatus:$e");
       return ApiResponse(e.statusCode, jsonEncode({"error": e.toString()}), null);
     }
   }

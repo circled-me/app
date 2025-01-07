@@ -310,7 +310,16 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
           future: _checkAccountsFuture,
           builder: (ctx, snapshot) {
             if (!snapshot.hasData) {
-              return Container();
+              return const Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 20),
+                    Text("Logging in. Please wait..."),
+                  ],
+                ),
+              );
             }
             return PageView(
               controller: _pageViewController,

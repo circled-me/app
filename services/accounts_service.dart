@@ -55,8 +55,8 @@ class AccountsService extends ChangeNotifier {
   Future<void> _addAccount(AccountModel account) async {
     // Check if account is still valid
     if (!await account.updateStatus()) {
-      print("Cannot connect to server!\nAccount: "+account.getDisplayName);
-      Toast.show(msg: "Cannot connect to server!\nAccount: "+account.getDisplayName, timeInSecForIosWeb: 5,gravity: Toast.ToastGravityCenter);
+      print("No connection to server.\nAccount: ${account.getDisplayName}");
+      Toast.show(msg: "No connection to server.\nAccount: ${account.getDisplayName}", timeInSecForIosWeb: 5,gravity: Toast.ToastGravityCenter);
       return;
     }
     accounts.add(account);
