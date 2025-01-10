@@ -136,6 +136,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
   Future<void> startCall(AccountModel account) async {
     final pathResponse = await account.getCallPath(false);
     if (pathResponse.status != 200) {
+      print("Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
       Toast.show(msg: "Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
       return;
     }

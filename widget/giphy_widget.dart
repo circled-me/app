@@ -91,8 +91,8 @@ class _GiphyWidgetState extends State<GiphyWidget> {
                 final data = json["data"] as List<dynamic>;
                 return GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisSpacing: 2,
-                    mainAxisSpacing: 2,
+                    crossAxisSpacing: 1,
+                    mainAxisSpacing: 1,
                     crossAxisCount: 3,
                   ),
                   padding: const EdgeInsets.fromLTRB(2, 10, 2, 2),
