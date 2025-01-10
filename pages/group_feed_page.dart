@@ -18,7 +18,6 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:app/helpers/toast.dart';
 import 'package:fluttertoast/fluttertoast.dart' show ToastGravity;
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import '../main.dart';
 import '../models/group_model.dart';
 import 'package:flutter/material.dart';
@@ -342,6 +341,19 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
     );
   }
 
+  Future<void> startCall() async {
+    final pathResponse = await widget.groupModel.getCallPath();
+    if (pathResponse.status != 200) {
+      print("Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
+      Toast.show(msg: "Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
+      return;
+    } else {
+      print("Got call link: ${pathResponse.body}");
+    }
+    final path = jsonDecode(pathResponse.body)["path"];
+    MyApp.openVideoCallView(widget.groupModel.account.server + path);
+  }
+
   Widget _groupHeader() {
     return SizedBox(
       width: double.infinity,
@@ -413,6 +425,18 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
                         child: const Padding(
                           padding: EdgeInsets.all(5.0),
                           child: Icon(Icons.edit_outlined,
+                              size: 30,
+                              color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 7,),
+                      InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: startCall,
+                        child: const Padding(
+                          padding: EdgeInsets.all(5.0),
+                          child: Icon(Icons.videocam_rounded,
                               size: 30,
                               color: Colors.black,
                           ),

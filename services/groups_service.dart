@@ -155,7 +155,6 @@ class GroupsService extends ChangeNotifier implements ListableService {
       // tmpLoaders.add(Future(() async {
       final group = GroupModel.fromJson(account, element);
       await group.loadLocalData();
-      //await group.loadRemoteMessages();
       await group.saveLocalData();
       newGroups.add(group);
       // }));

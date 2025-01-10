@@ -249,8 +249,8 @@ class _MomentThumbsPageState extends State<MomentThumbsPage> {
                 return GridView.builder(
                   controller: _scrollController,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisSpacing: 2,
-                    mainAxisSpacing: 2,
+                    crossAxisSpacing: 1,
+                    mainAxisSpacing: 1,
                     crossAxisCount: 3,
                   ),
                   itemCount: assetsToRender.length,

@@ -501,8 +501,8 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
                 triggerSelectionOnTap: selectionMode,
                 reverse: true,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisSpacing: 2,
-                  mainAxisSpacing: 2,
+                  crossAxisSpacing: 1,
+                  mainAxisSpacing: 1,
                   crossAxisCount: gridSize,
                 ),
                 itemCount: assets.length,

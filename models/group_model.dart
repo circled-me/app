@@ -15,7 +15,7 @@ class GroupModel {
   String name;
   String colour;
   bool favourite;
-  int lastReadID = 0;
+  int lastReadID = -1;
   bool allMessagesLoaded = false;
   bool _isNew = false;
   final bool isAdmin;
@@ -44,7 +44,7 @@ class GroupModel {
     if (_isNew) {
       return true;
     }
-    if (messages.isEmpty || messages.last.id == lastReadID) {
+    if (messages.isEmpty || messages.last.id == lastReadID || lastReadID == -1) {
       return false;
     }
     // Check if all unread messages are ours
@@ -57,6 +57,10 @@ class GroupModel {
   }
   get lastIDReceived => messages.isNotEmpty ? messages.last.id : 0;
   get tag => "GroupTag-"+account.identifier+"-"+id.toString();
+
+  Future<ApiResponse> getCallPath() async {
+    return account.apiClient.get("/group/video-link?id=$id");
+  }
 
   String messageTime() {
     if (messages.isEmpty) {
@@ -81,7 +85,7 @@ class GroupModel {
   String messagePreview() {
     if (messages.isEmpty) {
       if (members.length == 2 && name == "") {
-        return "Start chatting here...";
+        return "Start chatting";
       }
       return userListPreview();
     }
@@ -173,6 +177,9 @@ class GroupModel {
   }
 
   Future<void> saveLocalData() async {
+    if (lastReadID == -1) {
+      lastReadID = 0;
+    }
     final msgsAsString = jsonEncode(_forLocalStorage());
     await _storage.write(msgsAsString);
   }

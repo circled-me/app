@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:app/main.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:push/push.dart';
 
 import 'package:app/models/user_model.dart';
@@ -95,7 +96,7 @@ class AccountModel {
   Future<ApiResponse> logout() async {
     await apiClient.emptyCache();
     await Push.instance.token.then((token) {
-      http.post(Uri.parse(_pushServer + "/deregister"), body: jsonEncode({
+      http.post(Uri.parse("$_pushServer/deregister"), body: jsonEncode({
         "type": Platform.isIOS ? 0 : 1, // only iOS and Android supported
         "user_token": pushToken,
         "service_token": token!
@@ -121,29 +122,21 @@ class AccountModel {
     return url;
   }
 
-  void updatePushServer() {
+  void updatePushServer() async {
     print("called updatePushServer");
+    String voipToken = await FlutterCallkitIncoming.getDevicePushTokenVoIP();
     Push.instance.token.then((token) {
-      print("GOT TOKEN:"+token.toString());
-      if (token == null) {
-        print("Couldn't get push token");
-      }
-      print(jsonEncode({
+      final payload = jsonEncode({
         "type": Platform.isIOS ? 0 : 1, // only iOS and Android supported
         "user_token": pushToken,
+        "voip_token": voipToken,
         "service_token": token!,
         "debug_mode": kDebugMode ? 1 : 0,
         "app_version": MyApp.version,
         "badge_count": MyApp.numUnread,
-      }));
-      http.post(Uri.parse(_pushServer+"/register"), body: jsonEncode({
-        "type": Platform.isIOS ? 0 : 1, // only iOS and Android supported
-        "user_token": pushToken,
-        "service_token": token!,
-        "debug_mode": kDebugMode ? 1 : 0,
-        "app_version": MyApp.version,
-        "badge_count": MyApp.numUnread,
-      })).then((response) {
+      });
+      print("PUSH PAYLOAD: $payload");
+      http.post(Uri.parse(_pushServer+"/register"), body: payload).then((response) {
         if (response.statusCode != 200) {
           print(response.request!.url.toString()+" was not successful");
           print(response.body);
