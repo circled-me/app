@@ -1,16 +1,23 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:app/models/account_model.dart';
 import 'package:app/models/album_model.dart';
 import 'package:app/pages/album_thumbs_page.dart';
 import 'package:app/services/albums_service.dart';
 import 'package:app/services/assets_service.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:app/services/uni_link_service.dart';
+import 'package:app/widget/webview_dialog_widget.dart';
+import 'package:flutter_callkit_incoming/entities/entities.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:push/push.dart';
 import 'package:uni_links/uni_links.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'app_consts.dart';
 import 'pages/tabs.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +46,75 @@ class MyApp extends StatefulWidget {
 
   @override
   State<MyApp> createState() => _MyAppState();
+
+  static void openVideoCallView(String url) {
+    // Try finding the corresponding account for this url
+   String queryString = "";
+    final accounts = AccountsService.getAccounts.where((account) => url.startsWith("${account.server}/"));
+    if (accounts.isNotEmpty) {
+      queryString = "?token=${accounts.first.token}";
+      print("Found account for call: ${accounts.first.server}, query: $queryString");
+    } else {
+      print("No account found for call");
+    }
+    final rootContext = MyApp.navigatorKey.currentState!.context;
+    late final PlatformWebViewControllerCreationParams params;
+    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
+      params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+    final controller = WebViewController.fromPlatformCreationParams(
+      params,
+      onPermissionRequest: (request) => request.grant(),
+    )
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.black)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            print("WebView is loading (progress : $progress%)");
+          },
+          onPageStarted: (String url) {
+            print('Page started loading: $url');
+          },
+          onPageFinished: (String url) {
+            print('Page finished loading: $url');
+          },
+          onHttpError: (HttpResponseError error) {
+            print('HTTP error: $error');
+          },
+          onWebResourceError: (WebResourceError error) {
+            print('Web Resource error: $error');
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            print('Navigation Request: $request');
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
+    if (controller.platform is AndroidWebViewController) {
+      // AndroidWebViewController.enableDebugging(true);
+      (controller.platform as AndroidWebViewController)
+          .setMediaPlaybackRequiresUserGesture(false);
+    }
+    controller.clearCache();
+    // Finally, load the URL
+    url = "$url$queryString#inapp";
+    controller.loadRequest(Uri.parse(url));
+
+    showDialog(
+      context: rootContext,
+      barrierDismissible: true,
+
+      builder: (BuildContext context) {
+        return WebViewDialog(controller: controller);
+      },
+    );
+  }
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
@@ -164,6 +240,28 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
 
   void _handlePushNotifications() {
+    print("Setting up push notifications");
+    FlutterCallkitIncoming.onEvent.listen((CallEvent? event) async {
+      if (event == null) {
+        print("CallEvent: null");
+        return;
+      }
+      print("CallEvent: $event");
+      if (event.event == Event.actionCallAccept || event.event == Event.actionCallStart) {
+        FlutterCallkitIncoming.activeCalls().then((calls) {
+          Timer(Duration(seconds: 1), () {
+            FlutterCallkitIncoming.endAllCalls().then((calls) {
+              final callUrl = event.body["handle"] as String;
+              MyApp.openVideoCallView(callUrl);
+            });
+          });
+        });
+      }
+      if (event.event == Event.actionCallEnded) {
+        FlutterCallkitIncoming.endAllCalls();
+      }
+    });
+
     // TODO: Handle badges
     Push.instance.requestPermission().then(AccountsService.pushTokenReceived);
 

@@ -133,11 +133,6 @@ class _GroupsListPageState extends State<GroupsListPage> {
     );
   }
 
-  // void getVoipToken() async {
-  //   final token =  await FlutterCallkitIncoming.getDevicePushTokenVoIP();
-  //   print("VOIP Token: $token");
-  // }
-
   Future<void> startCall(AccountModel account) async {
     final pathResponse = await account.getCallPath(false);
     if (pathResponse.status != 200) {
@@ -145,7 +140,7 @@ class _GroupsListPageState extends State<GroupsListPage> {
       return;
     }
     final path = jsonDecode(pathResponse.body)["path"];
-    openVideoCallView("${account.server + path}#inapp");
+    MyApp.openVideoCallView(account.server + path);
   }
 
   Future<void> createNewCall(BuildContext context) async {
