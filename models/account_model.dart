@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import '../services/api_client.dart';
 
 class AccountModel {
+  static const isDebugMode = kDebugMode || String.fromEnvironment("DEBUG") == "1";
   static const _pushServer = "https://push.circled.me";
   final String server, name, token;
   final int userID; // Remote user id
@@ -131,7 +132,7 @@ class AccountModel {
         "user_token": pushToken,
         "voip_token": voipToken,
         "service_token": token!,
-        "debug_mode": kDebugMode ? 1 : 0,
+        "debug_mode": isDebugMode ? 1 : 0,
         "app_version": MyApp.version,
         "badge_count": MyApp.numUnread,
       });
