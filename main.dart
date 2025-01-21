@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
 
-import 'package:app/models/account_model.dart';
 import 'package:app/models/album_model.dart';
 import 'package:app/pages/album_thumbs_page.dart';
 import 'package:app/services/albums_service.dart';
@@ -12,7 +12,10 @@ import 'package:app/widget/webview_dialog_widget.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:proximity_screen_lock_ios/proximity_screen_lock_ios.dart';
 import 'package:provider/provider.dart';
+// import 'package:proximity_sensor/proximity_sensor.dart';
 import 'package:push/push.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -41,15 +44,19 @@ class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   static final navigatorKey = GlobalKey<NavigatorState>();
+  static final proximityIOS = ProximityScreenLockIos();
   static String version = "";
   static int numUnread = 0;
 
   @override
   State<MyApp> createState() => _MyAppState();
 
-  static void openVideoCallView(String url) {
+  static void openVideoCallView(String url) async {
+    await Permission.camera.request();
+    await Permission.microphone.request();
+
     // Try finding the corresponding account for this url
-   String queryString = "";
+    String queryString = "";
     final accounts = AccountsService.getAccounts.where((account) => url.startsWith("${account.server}/"));
     if (accounts.isNotEmpty) {
       queryString = "?token=${accounts.first.token}";
@@ -106,15 +113,34 @@ class MyApp extends StatefulWidget {
     url = "$url$queryString#inapp";
     controller.loadRequest(Uri.parse(url));
 
-    showDialog(
+    // if (Platform.isAndroid) {
+    //   await ProximitySensor.setProximityScreenOff(true).onError((error,
+    //       stackTrace) {
+    //     print("Could not enable screen off functionality");
+    //     Toast.show(msg: "Could not enable screen off functionality");
+    //     return null;
+    //   });
+    // } else
+    if (Platform.isIOS && await proximityIOS.isProximityLockSupported()) {
+      await proximityIOS.setActive(true);
+      // TODO: Or just use Swift and always enable it?
+      //     UIDevice.current.isProximityMonitoringEnabled = true
+    }
+    await showDialog(
       context: rootContext,
-      barrierDismissible: true,
-
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return WebViewDialog(controller: controller);
       },
     );
+    // if (Platform.isAndroid) {
+    //   await ProximitySensor.setProximityScreenOff(false);
+    // } else
+    if (Platform.isIOS && await proximityIOS.isProximityLockSupported()) {
+      await proximityIOS.setActive(false);
+    }
   }
+
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
@@ -183,8 +209,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     showDialog<bool>(
       context: rootContext,
       builder: (context) => AlertDialog(
-        title: Text(remoteMessage!.notification!.title!),
-        content: Text(remoteMessage!.notification!.body!),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text(remoteMessage.notification!.title!),
+        content: Text(remoteMessage.notification!.body!),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -197,35 +224,49 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ],
       ),
     ).then((yes) {
-      if (yes!=null && yes!) {
+      if (yes!=null && yes) {
         show();
       }
     });
+  }
+
+  void _handleIncomingCall(Map<Object?, Object?>? data) {
+    final params = CallKitParams(
+      id: data!["id"] as String,
+      handle: data["caller_id"] as String,
+      nameCaller: data["caller_name"] as String,
+      appName: "circled.me"
+    );
+    FlutterCallkitIncoming.showCallkitIncoming(params);
   }
 
   void _handlePushNotification(Map<Object?, Object?>? data, RemoteMessage? remoteMessage) {
     if (data == null) {
       return;
     }
+    if (data["caller_id"] is String && data["caller_id"] != "") {
+      _handleIncomingCall(data);
+      return;
+    }
     final ask = remoteMessage!=null
-        && remoteMessage!.notification != null
-        && remoteMessage!.notification!.title!=null
-        && remoteMessage!.notification!.title!=null;
+        && remoteMessage.notification != null
+        && remoteMessage.notification!.title!=null
+        && remoteMessage.notification!.title!=null;
 
-    if (data!["type"] == "album") {
+    if (data["type"] == "album") {
       AlbumsService.onReady(() {
-        final token = data!["token"] as String;
-        final albumId = int.parse(data!["album"] as String);
+        final token = data["token"] as String;
+        final albumId = int.parse(data["album"] as String);
 
         final album = AlbumsService.getAlbum(albumId, accountPushToken: token);
         if (album == null) {
           // Could be a new shared album, try reloading
-          final acc = AccountsService.getAccounts.where((account) => account.pushToken == data!["token"]).elementAtOrNull(0);
-          if (acc == null) {
+          final accs = AccountsService.getAccounts.where((account) => account.pushToken == data["token"]);
+          if (accs.isEmpty) {
             print("Cannot find account for push token");
             return;
           }
-          AlbumsService.reloadAccount(acc!).then((_) {
+          AlbumsService.reloadAccount(accs.first).then((_) {
             final album = AlbumsService.getAlbum(albumId, accountPushToken: token);
             _showAlbum(album, ask, remoteMessage);
             AlbumsService.instance.notifyListeners(); // Refresh albums page
@@ -233,7 +274,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         }
        _showAlbum(album, ask, remoteMessage);
       });
-    } else if (data!["type"] == "group") {
+    } else if (data["type"] == "group") {
       UniLinksService.add(Uri.parse("https://dummy/group/"));
     }
   }
@@ -251,7 +292,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         FlutterCallkitIncoming.activeCalls().then((calls) {
           Timer(Duration(seconds: 1), () {
             FlutterCallkitIncoming.endAllCalls().then((calls) {
-              final callUrl = event.body["handle"] as String;
+              String callUrl = "";
+              // In iOS, the handle is the caller's ID
+              if (event.body["handle"] is String && event.body["handle"] != "") {
+                callUrl = event.body["handle"];
+              // In Android, the number is the caller's ID
+              } else if (event.body["number"] is String && event.body["number"] != "") {
+                callUrl = event.body["number"];
+              } else {
+                print("ERROR: No handle or number in call event: ${jsonEncode(event)}");
+                return;
+              }
               MyApp.openVideoCallView(callUrl);
             });
           });
@@ -274,17 +325,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         print('Notification tap launched app from terminated state:\n'
             'RemoteMessage: ${data} \n');
       }
-      _handlePushNotification(Platform.isAndroid ? data : data!["data"] as Map<Object?, Object?>?, null);
+      _handlePushNotification(Platform.isAndroid ? data : data["data"] as Map<Object?, Object?>?, null);
     });
 
     // Handle notification taps
     Push.instance.onNotificationTap.listen((data) {
       print('Notification was tapped:\n'
           'Data: ${data} \n');
-      if (data == null) {
-        return;
-      }
-      _handlePushNotification(Platform.isAndroid ? data : data!["data"] as Map<Object?, Object?>?, null);
+      _handlePushNotification(Platform.isAndroid ? data : data["data"] as Map<Object?, Object?>?, null);
     });
 
     // Handle push notifications
@@ -293,7 +341,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           'RemoteMessage.Notification: ${message.notification} \n'
           ' title: ${message.notification?.title.toString()}\n'
           ' body: ${message.notification?.body.toString()}\n'
-          'RemoteMessage.Data: ${message.data}');
+          'RemoteMessage.onMessage: ${message.data}');
 
       if (message.data == null) {
         return;
@@ -307,17 +355,19 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           'RemoteMessage.Notification: ${message.notification} \n'
           ' title: ${message.notification?.title.toString()}\n'
           ' body: ${message.notification?.body.toString()}\n'
-          'RemoteMessage.Data: ${message.data}');
+          'RemoteMessage.onBackgroundMessage: ${message.data}');
+
       if (message.data == null) {
         return;
       }
       _handlePushNotification(Platform.isAndroid ? message.data : message.data!["data"] as Map<Object?, Object?>?, null);
     });
   }
-  /// Handle incoming links - the ones that the app will recieve from the OS
+  /// Handle incoming links - the ones that the app will receive from the OS
   /// while already started.
   void _handleIncomingLinks() {
     if (!kIsWeb) {
+      FlutterCallkitIncoming.requestFullIntentPermission();
       // It will handle app links while the app is already started - be it in
       // the foreground or in the background.
       _uriSub = uriLinkStream.listen((Uri? uri) {

@@ -7,14 +7,7 @@ import 'package:app/services/groups_service.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:app/helpers/toast.dart';
-import 'package:share_plus/share_plus.dart';
-import '../main.dart';
-import '../models/album_model.dart';
-import '../models/asset_model.dart';
-import '../services/accounts_service.dart';
-import '../services/albums_service.dart';
-import '../services/listable_service.dart';
-import '../widget/select_add_album_widget.dart';
+import 'package:app/main.dart';
 
 class Group {
   static void share(String text) async {
@@ -23,6 +16,7 @@ class Group {
     final toShareWith = await showDialog<GroupModel?>(
       context: rootContext,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Text("Share with"),
         content: FutureBuilder<List<GroupModel>>(
           future: GroupsService.instance.getGroups(),
@@ -67,13 +61,13 @@ class Group {
     if (toShareWith==null) {
       return;
     }
-    final wsChannel = await WebSocketService.instance.getChannel(toShareWith!.account);
+    final wsChannel = await WebSocketService.instance.getChannel(toShareWith.account);
     if (wsChannel == null) {
       Toast.show(msg: "Cannot send message to group. Connection unavailable");
       return;
     }
     final stamp = DateTime.now().toUtc().millisecondsSinceEpoch;
-    final message = GroupMessage(0, toShareWith!.id, stamp, 0, 0, "", text);
-    wsChannel!.add(jsonEncode(WebSocketMessage(WebSocketService.messageTypeGroupMessage, stamp, message)));
+    final message = GroupMessage(0, toShareWith.id, stamp, 0, 0, "", text);
+    wsChannel.add(jsonEncode(WebSocketMessage(WebSocketService.messageTypeGroupMessage, stamp, message)));
   }
 }

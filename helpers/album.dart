@@ -4,10 +4,8 @@ import 'package:app/helpers/group.dart';
 import 'package:app/models/album_base_model.dart';
 import 'package:app/models/asset_base_model.dart';
 import 'package:app/models/external_album_model.dart';
-import 'package:app/models/moment_model.dart';
 import 'package:app/pages/album_thumbs_page.dart';
 import 'package:app/pages/moment_thumbs_page.dart';
-import 'package:app/services/groups_service.dart';
 import 'package:app/widget/cached_thumb_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:app/helpers/toast.dart';
@@ -15,7 +13,6 @@ import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 import '../models/album_model.dart';
 import '../models/asset_model.dart';
-import '../services/accounts_service.dart';
 import '../services/albums_service.dart';
 import '../services/listable_service.dart';
 import '../widget/select_add_album_widget.dart';
@@ -104,6 +101,7 @@ class Album {
     final willShare = await showDialog<int>(
       context: rootContext,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: Text(albumInfo.hidden ? "Share" : "Share '"+albumInfo.name+"'"),
         content: StatefulBuilder(builder: (context, setState) {
           return Column(

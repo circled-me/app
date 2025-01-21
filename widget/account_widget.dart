@@ -68,6 +68,7 @@ class AccountWidget extends StatelessWidget {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Delete Account'),
           content: const SingleChildScrollView(
             child: ListBody(

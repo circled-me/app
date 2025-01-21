@@ -12,6 +12,7 @@ class MessageInput extends StatelessWidget {
   final TextInputType keyboard;
   final bool autoFocus;
   final bool disabled;
+  final double fontSize;
   final ValueChanged<String>? onSubmitted;
   final ValueChanged<String>? onChanged;
   const MessageInput({
@@ -21,6 +22,7 @@ class MessageInput extends StatelessWidget {
     this.keyboard=TextInputType.multiline,
     this.autoFocus=false,
     this.disabled=false,
+    this.fontSize=18,
     this.onSubmitted,
     this.onChanged,
     Key? key
@@ -55,6 +57,9 @@ class MessageInput extends StatelessWidget {
         enabled: !disabled,
         autofocus: autoFocus,
         controller: ctrl,
+        style: TextStyle(
+          fontSize: fontSize,
+        ),
         enableSuggestions: true,
         autocorrect: true,
         textCapitalization: TextCapitalization.sentences,

@@ -67,6 +67,7 @@ class _SelectOrAddAlbumWidgetState extends State<SelectOrAddAlbumWidget> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Create Album'),
           content: RoundInputHint(ctrl: albumNameCtrl, hintText: "Album Name", autoFocus: true,),
           actions: <Widget>[
@@ -92,6 +93,7 @@ class _SelectOrAddAlbumWidgetState extends State<SelectOrAddAlbumWidget> {
       value: 0,
     ));
     return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text(widget.title),
       content: DropdownButtonHideUnderline(
         child: DropdownButton<int>(

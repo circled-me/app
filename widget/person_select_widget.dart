@@ -38,6 +38,7 @@ class _PersonSelectWidgetState extends State<PersonSelectWidget> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text(widget.title),
       content: StatefulBuilder(
         builder: (context, setState) => Column(

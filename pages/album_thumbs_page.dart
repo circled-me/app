@@ -194,6 +194,7 @@ class _AlbumThumbsPageState extends State<AlbumThumbsPage> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Remove from album'),
           content: SingleChildScrollView(
             child: ListBody(
@@ -252,6 +253,7 @@ class _AlbumThumbsPageState extends State<AlbumThumbsPage> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Edit album'),
           content: SingleChildScrollView(
               child: RoundInputHint(ctrl: _nameCtrl, hintText: "Name",)
@@ -296,6 +298,7 @@ class _AlbumThumbsPageState extends State<AlbumThumbsPage> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Delete album'),
           content: const Text("Are you sure you want to remove the album? The assets won't be deleted."),
           actions: <Widget>[
@@ -336,6 +339,7 @@ class _AlbumThumbsPageState extends State<AlbumThumbsPage> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Set album cover'),
           content: const SingleChildScrollView(
             child: ListBody(

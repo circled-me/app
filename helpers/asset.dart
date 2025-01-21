@@ -28,6 +28,7 @@ class Asset {
       barrierDismissible: false,
       builder: (_) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text("Downloading..."),
           content: StatefulBuilder(builder: (_, setState) {
             localSetState = setState;
@@ -100,6 +101,7 @@ class Asset {
       barrierDismissible: false,
       builder: (_) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text("Uploading..."),
           content: StatefulBuilder(builder: (_, setState) {
             localSetState = setState;
@@ -137,7 +139,7 @@ class Asset {
       Toast.show(msg: "Some assets could not be uploaded");
     }
     if (albumInfo != null) {
-      final multiResponse = await AssetModel.addToAlbum(account, albumInfo!.id, newIds);
+      final multiResponse = await AssetModel.addToAlbum(account, albumInfo.id, newIds);
       if (multiResponse.status != 200) {
         print("Multi result error:"+multiResponse.status.toString()+"; "+multiResponse.error);
       }
@@ -172,7 +174,7 @@ class Asset {
       h = 1280;
       w = 1280*image.width~/image.height;
     }
-    final thumb = copyResize(image!, width: w, height: h);
+    final thumb = copyResize(image, width: w, height: h);
     return Future(() => encodeJpg(thumb, quality: 90));
   }
 

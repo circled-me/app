@@ -49,6 +49,7 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
     }
     // Show YES/NO dialog to confirm if user wants to choose password
     showDialog<bool>(context: context, builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: const Text("You have been invited!"),
       content: Text("Welcome to the '"+server+"' server.\n\nDo you want to create username/password?\n\nIf you choose NO, a random username/password will be created for you."),
       actions: <Widget>[
@@ -279,6 +280,7 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
     return await showDialog<bool>(
       context: rootContext,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Text('circled.me'),
         content: const Text('Do you want to exit an application?'),
         actions: <Widget>[
@@ -339,6 +341,8 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
           items: _getTabs(accountsService, groupsService),
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
+          unselectedFontSize: 13,
+          selectedFontSize: 14,
         ),
       ),
     );

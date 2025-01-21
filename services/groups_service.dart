@@ -6,6 +6,7 @@ import 'package:app/models/group_message_model.dart';
 import 'package:app/models/group_model.dart';
 import 'package:app/models/group_update_model.dart';
 import 'package:app/models/group_user_model.dart';
+import 'package:app/models/seen_message_model.dart';
 import 'package:app/services/accounts_service.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:app/storage.dart';
@@ -143,6 +144,17 @@ class GroupsService extends ChangeNotifier implements ListableService {
     }
   }
 
+  Future<void> processSeen(AccountModel account, SeenMessage seenMessage) async {
+    for (final group in _groups) {
+      if (group.id == seenMessage.groupID && group.account == account) {
+        print("updateMemberSeenMessage: ${seenMessage.userID}, ${seenMessage.id}");
+        group.updateMemberSeenMessage(seenMessage.userID, seenMessage.id);
+        // group.saveLocalData();
+        break;
+      }
+    }
+  }
+
   Future<void> _reloadGroupsFor(AccountModel account) async {
     final response = await account.apiClient.get("/group/list");
     if (response.status != 200) {
@@ -170,7 +182,10 @@ class GroupsService extends ChangeNotifier implements ListableService {
   Future<void> _loadFromAccount(AccountModel account) async {
     await _reloadGroupsFor(account);
     // TODO: Delete local messages (maybe separate method after logout?)
-    final wsSub = WebSocketSubscriber(account, [WebSocketService.messageTypeGroupMessage, WebSocketService.messageTypeGroupUpdate], (channel, message) async {
+    final wsSub = WebSocketSubscriber(account,
+      [WebSocketService.messageTypeGroupMessage, WebSocketService.messageTypeGroupUpdate, WebSocketService.messageTypeSeenMessage],
+      (channel, message) async {
+
       _wsChannels[account] = channel;
       if (message == null) {
         return;
@@ -194,6 +209,9 @@ class GroupsService extends ChangeNotifier implements ListableService {
         if (update.title != "") {
           Toast.show(msg: update.title, timeInSecForIosWeb: 3);
         }
+      } else if (message.type == WebSocketService.messageTypeSeenMessage) {
+        processSeen(account, SeenMessage.fromJson(message.data));
+        notifyListeners();
       }
     });
     WebSocketService.instance.subscribe(wsSub!);

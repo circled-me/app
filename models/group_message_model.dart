@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:app/helpers/album.dart';
 import 'package:app/models/album_base_model.dart';
-import 'package:app/models/album_model.dart';
 import 'package:app/models/external_album_model.dart';
 import 'package:app/services/api_client.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -106,7 +105,7 @@ class GroupMessage {
             child: SizedBox(
               height: 150,
               width: 280,
-              child: snapshot==null || snapshot.data == null
+              child: snapshot.data == null
                 ? const Center(child: CircularProgressIndicator())
                 : Album.getPreview(context, snapshot.data!)
             ),
@@ -132,15 +131,15 @@ class GroupMessage {
         if (t != null) {
           if (i%2 == 1) {
             // Text
-            textPieces.add(TextSpan(text: t!, style: style));
+            textPieces.add(TextSpan(text: t, style: style));
           } else {
             // Link
             textPieces.add(TextSpan(
               style: linkStyle,
-              text: t!,
+              text: t,
               recognizer: TapGestureRecognizer()
                 ..onTap = () async {
-                  final uri = Uri.parse(t!);
+                  final uri = Uri.parse(t);
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                   }

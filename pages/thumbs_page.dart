@@ -122,6 +122,7 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Delete'),
           content: SingleChildScrollView(
             child: ListBody(

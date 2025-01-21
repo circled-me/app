@@ -40,6 +40,7 @@ class _SelectOrAddUserWidgetState extends State<SelectOrAddUserWidget> {
     items.removeWhere((element) => element.value!=null && element.value==widget.service.account.userID);
 
     return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text(widget.title),
       content: Column(
         mainAxisSize: MainAxisSize.min,

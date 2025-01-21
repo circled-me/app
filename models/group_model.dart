@@ -15,7 +15,7 @@ class GroupModel {
   String name;
   String colour;
   bool favourite;
-  int lastReadID = -1;
+  int lastReadID = 0;
   bool allMessagesLoaded = false;
   bool _isNew = false;
   final bool isAdmin;
@@ -24,13 +24,13 @@ class GroupModel {
   late Storage _storage;
   String draftMessage = "";
 
-  GroupModel(this.account, this.id, this.name, this.colour, this.favourite, this.isAdmin, this.members) {
+  GroupModel(this.account, this.id, this.name, this.colour, this.favourite, this.isAdmin, this.members, this.lastReadID) {
     _storage = Storage(identifier);
   }
 
   static GroupModel fromJson(AccountModel account, Map<String, dynamic> json) {
     return GroupModel(account, json["id"], json["name"], json["colour"], json["favourite"], json["is_admin"],
-        (json["members"] as List<dynamic>).map((e) => GroupUser.fromJson(e)).toList());
+        (json["members"] as List<dynamic>).map((e) => GroupUser.fromJson(e)).toList(), json["seen_message"] ?? 0);
   }
 
   get identifier => account.identifier + "#" + id.toString();
@@ -44,14 +44,11 @@ class GroupModel {
     if (_isNew) {
       return true;
     }
-    if (messages.isEmpty || messages.last.id == lastReadID || lastReadID == -1) {
+    if (messages.isEmpty || messages.last.id == lastReadID) {
       return false;
     }
-    // Check if all unread messages are ours
-    for (int i=messages.length-1; i>=0 && messages[i].id>lastReadID; --i) {
-      if (messages[i].userID != account.userID) {
+    if (messages.last.userID != account.userID) {
         return true;
-      }
     }
     return false;
   }
@@ -166,9 +163,14 @@ class GroupModel {
     }
   }
 
-  Future<void> saveLastReadMessage(int id) async {
-    lastReadID = id;
+  Future<void> saveLastReadMessage(GroupMessage msg) async {
+    lastReadID = msg.id;
     await saveLocalData();
+    // if (msg.userID != account.userID) {
+    //   // Send 'seen update' to server only if the read message was not ours
+    //   print("Sending $lastReadID");
+    //   await saveLastReadRemote();
+    // }
   }
 
   Future<void> saveDraftMessage(String message) async {
@@ -177,17 +179,26 @@ class GroupModel {
   }
 
   Future<void> saveLocalData() async {
-    if (lastReadID == -1) {
-      lastReadID = 0;
-    }
     final msgsAsString = jsonEncode(_forLocalStorage());
     await _storage.write(msgsAsString);
+  }
+
+  Future<bool> saveLastReadRemote() async {
+    final result = await account.apiClient.post("/group/message-seen", body: jsonEncode({
+      "group_id": id,
+      "message_id": lastReadID
+    }));
+    if (result.status != 200) {
+      print("/group/message-seen error: ${result.status}:${result.body}");
+      return false;
+    }
+    return true;
   }
 
   Future<bool> saveRemote() async {
     final result = await account.apiClient.post("/group/save", body: jsonEncode(this));
     if (result.status != 200) {
-      print("/group/save error: "+result.status.toString() +":" + result.body);
+      print("/group/save error: ${result.status}:${result.body}");
       return false;
     }
     return true;
@@ -218,5 +229,14 @@ class GroupModel {
     colour =  c.red.toRadixString(16).padLeft(2, '0') +
               c.green.toRadixString(16).padLeft(2, '0') +
               c.blue.toRadixString(16).padLeft(2, '0');
+  }
+
+  void updateMemberSeenMessage(int userId, int messageId) {
+    for (var member in members) {
+      if (member.id == userId) {
+        member.lastSeenMessageId = messageId;
+        break;
+      }
+    }
   }
 }

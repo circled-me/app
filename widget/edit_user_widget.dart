@@ -134,6 +134,7 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
         }
         final bucketService = snapshot.data!;
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           scrollable: true,
           insetPadding: const EdgeInsets.all(10),
           title: const Text('User'),

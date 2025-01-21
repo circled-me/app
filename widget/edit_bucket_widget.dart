@@ -83,6 +83,7 @@ class _SelectOrEditBucketWidgetState extends State<EditBucketWidget> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       scrollable: true,
       insetPadding: const EdgeInsets.all(10),
       title: const Text('Storage Bucket'),

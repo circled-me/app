@@ -1,6 +1,5 @@
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:app/custom_cache.dart';
@@ -20,7 +19,7 @@ class ImageUtils {
         headers: asset.requestHeaders
     );
     img
-        ?.resolve(const ImageConfiguration())
+        .resolve(const ImageConfiguration())
         .addListener(ImageStreamListener((ImageInfo info, bool _) {
       completer.complete(info);
     }));

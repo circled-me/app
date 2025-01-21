@@ -4,16 +4,9 @@ import 'package:app/app_consts.dart';
 import 'package:app/services/api_client.dart';
 import 'package:app/services/user_service.dart';
 import 'package:flutter/material.dart';
-import 'package:app/helpers/toast.dart';
-import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 import '../models/account_model.dart';
-import '../models/album_model.dart';
-import '../models/asset_model.dart';
 import '../services/accounts_service.dart';
-import '../services/albums_service.dart';
-import '../services/listable_service.dart';
-import '../widget/select_add_album_widget.dart';
 import '../widget/select_add_user_widget.dart';
 
 class User {
@@ -81,6 +74,7 @@ class User {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             title: const Text('Select Account'),
             content: Column(
               mainAxisSize: MainAxisSize.min,

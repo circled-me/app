@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:app/models/asset_base_model.dart';
 import 'package:app/models/asset_model.dart';
 
 class FaceModel {

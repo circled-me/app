@@ -10,6 +10,8 @@ import 'package:app/services/user_service.dart';
 import 'package:app/widget/empty_info_widget.dart';
 import 'package:app/widget/multi_user_widget.dart';
 import 'package:app/helpers/toast.dart';
+import 'package:app/widget/round_input_hint_widget.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:app/widget/webview_dialog_widget.dart';
@@ -60,18 +62,6 @@ class _GroupsListPageState extends State<GroupsListPage> {
       account = selected!;
     }
     return account;
-  }
-
-  Future<void> shareLink(AccountModel account, bool reset) async {
-    final linkResponse = await account.getCallPath(reset);
-    if (linkResponse.status != 200) {
-      Toast.show(msg: "Couldn't get call link: ${linkResponse.status} ${linkResponse.body}");
-      return;
-    }
-    final path = jsonDecode(linkResponse.body)["path"];
-    final result = await Share.share(account.server + path,
-      sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
-    );
   }
 
   void openVideoCallView(String url) {
@@ -133,59 +123,108 @@ class _GroupsListPageState extends State<GroupsListPage> {
     );
   }
 
-  Future<void> startCall(AccountModel account) async {
-    final pathResponse = await account.getCallPath(false);
+  Future<String> resetCallUrl(AccountModel account) async {
+    String url = '';
+    // Show a dialog to confirm the reset
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text("Reset Call Link"),
+        content: const Text("Are you sure you want to reset the call link?\nThis will invalidate the previous link."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppConst.attentionColor),
+            onPressed: () async {
+              url = await getCallUrl(account, true);
+              Navigator.of(context).pop(true);
+            },
+            child: const Text("Reset"),
+          ),
+        ],
+      ),
+    );
+    return url;
+  }
+
+  Future<String> getCallUrl(AccountModel account, bool reset) async {
+    final pathResponse = await account.getCallPath(reset);
     if (pathResponse.status != 200) {
       print("Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
       Toast.show(msg: "Couldn't get call link: ${pathResponse.status} ${pathResponse.body}");
-      return;
+      return '';
     }
     final path = jsonDecode(pathResponse.body)["path"];
-    MyApp.openVideoCallView(account.server + path);
+    return account.server + path;
   }
 
   Future<void> createNewCall(BuildContext context) async {
-    late bool resetCheckbox = false;
     final account = await selectAccount(context);
     if (account == null) {
+      return;
+    }
+    String callUrl = await getCallUrl(account, false);
+    if (callUrl.isEmpty) {
       return;
     }
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Text("Video Call"),
         content: StatefulBuilder(builder: (context, setState) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Share the call link with the other participants and then join the call.\n\nThe link will be valid unless explicitly reset."),
+              const Text("Share the call link with the other participant(s).\n\nYou will receive a call once someone joins or you can join the call straight away.\n\nYour personal call link is:"),
               const SizedBox(height: 10),
-              CheckboxListTile(
-                visualDensity: VisualDensity.compact,
-                title: const Text("Reset Link"),
-                value: resetCheckbox,
-                onChanged: (value) => setState(() {
-                  resetCheckbox = value!;
-                }),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  child: const Text("Share Call Link"),
-                  onPressed: () {
-                    shareLink(account, resetCheckbox);
-                  }
+              GestureDetector(
+                onTap: () async {
+                  await Clipboard.setData(ClipboardData(text: callUrl));
+                  Toast.show(msg: "Link copied to clipboard", gravity: Toast.ToastGravityCenter);
+                },
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(callUrl, style: const TextStyle(color: Colors.blue),),
                 ),
               ),
+              const SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    onPressed: () => Share.share(callUrl,
+                      sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
+                    ),
+                    icon: const Icon(Icons.share)
+                  ),
+                  IconButton(
+                    onPressed: () async {
+                      final newUrl = await resetCallUrl(account);
+                      print("New call link: $newUrl");
+                      if (newUrl.isNotEmpty) {
+                        // Copy the new link to the clipboard
+                        await Clipboard.setData(ClipboardData(text: newUrl));
+                        Toast.show(msg: "Link reset and copied to clipboard", gravity: Toast.ToastGravityCenter);
+                        setState(() {
+                          callUrl = newUrl;
+                        });
+                      }
+                    }, // Just to trigger a rebuild
+                    icon: const Icon(Icons.recycling)
+                  ),
+                ],
+              ),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConst.attentionColor,
-                  ),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    startCall(account);
+                    MyApp.openVideoCallView(callUrl);
                   },
                   child: const Text("Join Call"),
                 ),
@@ -219,9 +258,9 @@ class _GroupsListPageState extends State<GroupsListPage> {
           Toast.show(msg: "No users selected...");
           return;
         }
-        List<GroupUser> members = [GroupUser(account.userID, usersService.userMap[account.userID]!.name, true)];
+        List<GroupUser> members = [GroupUser(account.userID, usersService.userMap[account.userID]!.name, true, 0)];
         for (final member in newMembers.entries) {
-          members.add(GroupUser(member.key, usersService.userMap[member.key]!.name, member.value));
+          members.add(GroupUser(member.key, usersService.userMap[member.key]!.name, member.value, 0));
         }
         final newGroup = await GroupsService.instance.createGroup(account, members);
         if (newGroup == null) {

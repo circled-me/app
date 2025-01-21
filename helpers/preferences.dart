@@ -11,7 +11,7 @@ class Preferences {
     final SharedPreferences prefs = await _prefs;
     final result = prefs.getInt(_gridSize);
     if (result != null) {
-      return result!;
+      return result;
     }
     await setGridSize(defValue);
     return defValue;
@@ -19,7 +19,6 @@ class Preferences {
 
   static Future<void> setGridSize(int value) async {
     final SharedPreferences prefs = await _prefs;
-    final result = prefs.getInt(_gridSize);
     await prefs.setInt(_gridSize, value);
   }
 
@@ -29,7 +28,11 @@ class Preferences {
     if (accId == null) {
       return null;
     }
-    return AccountsService.getAccounts.where((account) => account.identifier == accId).firstOrNull;
+    final tmp = AccountsService.getAccounts.where((account) => account.identifier == accId);
+    if (tmp.isEmpty) {
+      return null;
+    }
+    return tmp.first;
   }
 
   static Future<void> setDefaultAccount(AccountModel account) async {

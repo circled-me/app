@@ -1,10 +1,8 @@
 import 'package:app/pages/bucket_list_page.dart';
 import 'package:app/pages/settings_main_page.dart';
 import 'package:app/pages/user_list_page.dart';
-import 'package:app/services/bucket_service.dart';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../models/account_model.dart';
 

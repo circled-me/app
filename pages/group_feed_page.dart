@@ -4,6 +4,7 @@ import 'package:app/app_consts.dart';
 import 'package:app/models/group_message_model.dart';
 import 'package:app/models/group_update_model.dart';
 import 'package:app/models/group_user_model.dart';
+import 'package:app/models/seen_message_model.dart';
 import 'package:app/models/websocket_message_model.dart';
 import 'package:app/services/groups_service.dart';
 import 'package:app/services/user_service.dart';
@@ -36,6 +37,10 @@ class GroupFeedPage extends StatefulWidget {
 class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveClientMixin<GroupFeedPage> {
   @override
   bool get wantKeepAlive => true;
+  static const kFontSize = 17.0;
+  static const kSmoothEdge = Radius.circular(16.0);
+  static const kSharpEdge = Radius.circular(3.0);
+  static const kSecondaryFontStyle = TextStyle(color: Colors.grey, fontSize: 14);
 
   final TextEditingController groupNameCtrl = TextEditingController();
   final TextEditingController messageCtrl = TextEditingController();
@@ -61,14 +66,25 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
     }
   }
 
+  void seenAck(GroupMessage message) {
+    widget.groupModel.saveLastReadMessage(message);
+    if (wsChannel == null) {
+      return;
+    }
+    final stamp = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final ack = SeenMessage(message.id, widget.groupModel.id, widget.groupModel.account.userID);
+    wsChannel!.add(jsonEncode(WebSocketMessage(WebSocketService.messageTypeSeenMessage, stamp, ack)));
+  }
+
   Future<void> _setUpWebSocket() async {
     GroupsService.instance.savedMessageReceiver = (GroupMessage message) {
       if (message.groupID != widget.groupModel.id) {
         // Not for us...
         return;
       }
+      print("Adding message to chat id ${message.id}: ${message.content}");
       _addMessage(message);
-      widget.groupModel.saveLastReadMessage(message.id);
+      seenAck(message);
       // NOTE: GroupsService.notifyListeners() will be called after executing this savedMessageReceiver
       if (scrollController.positions.length == 1 && scrollController.position.pixels != 0) {
         scrollController.animateTo(0,
@@ -85,7 +101,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
           if (wsChannel == channel) {
             return;
           }
-          Toast.show(msg: channel != null ? "Connected!" : "Disconnected",
+          Toast.show(msg: channel != null ? "Connected" : "Disconnected",
               gravity: ToastGravity.BOTTOM);
         } else {
           if (message.type == WebSocketService.messageTypeGroupUpdate) {
@@ -117,7 +133,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
     await _setUpWebSocket();
     if (widget.groupModel.messages.isNotEmpty && widget.groupModel.lastReadID != widget.groupModel.messages.last.id) {
       // TODO: Scroll to lastReadID and update when scrolling?
-      widget.groupModel.saveLastReadMessage(widget.groupModel.messages.last.id);
+      seenAck(widget.groupModel.messages.last);
       await GroupsService.instance.reSortGroups();
     }
     setState(() {});
@@ -184,6 +200,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Delete'),
           content: const SingleChildScrollView(
             child: ListBody(
@@ -248,6 +265,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
         return KeyboardVisibilityBuilder(
           builder: (context, isKeyboardVisible) {
             return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               title: const Text('Edit Group'),
               content: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -323,7 +341,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
         // TODO: Add warning for removed users
         widget.groupModel.members.removeWhere((user) => user.id != widget.groupModel.account.userID);
         for (final member in newMembers.entries) {
-          widget.groupModel.members.add(GroupUser(member.key, usersService.userMap[member.key]!.name, member.value));
+          widget.groupModel.members.add(GroupUser(member.key, usersService.userMap[member.key]!.name, member.value, 0));
           print("Added ${member.key}");
         }
         final success = await GroupsService.save(widget.groupModel);
@@ -552,14 +570,15 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
       msgWidgets.add(Center(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(0, 6, 0, 0),
-          child: Text(df.format(dt), style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          child: Text(df.format(dt), style: kSecondaryFontStyle),
         ),
       ));
     }
     for (final msg in cluster) {
-      msgWidgets.add(_renderMessage(msg, cnt == 0));
+      msgWidgets.add(_renderMessage(msg, cnt == 0, cnt == cluster.length-1));
       cnt++;
     }
+    msgWidgets.add(SizedBox(height: 7)); // Some padding at the bottom
     return Column(children: msgWidgets);
   }
 
@@ -573,44 +592,77 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
     return defaultName;
   }
 
-  Widget _renderMessage(GroupMessage msg, bool first) {
+  Widget _renderMessage(GroupMessage msg, bool first, bool last) {
     final isOwn = msg.userID == widget.groupModel.account.userID;
+    final borderRadius = isOwn ? (
+      first && last
+        ? BorderRadius.circular(16.0)
+        : first
+            ? BorderRadius.only(topLeft: kSmoothEdge, topRight: kSmoothEdge, bottomLeft: kSmoothEdge, bottomRight: kSharpEdge)
+            : last
+                ? BorderRadius.only(topLeft: kSmoothEdge, topRight: kSharpEdge, bottomLeft: kSmoothEdge, bottomRight: kSmoothEdge)
+                : BorderRadius.only(topLeft: kSmoothEdge, topRight: kSharpEdge, bottomLeft: kSmoothEdge, bottomRight: kSharpEdge)
+    ) : (
+      first && last
+        ? BorderRadius.circular(16.0)
+        : first
+          ? BorderRadius.only(topLeft: kSmoothEdge, topRight: kSmoothEdge, bottomLeft: kSharpEdge, bottomRight: kSmoothEdge)
+          : last
+            ? BorderRadius.only(topLeft: kSharpEdge, topRight: kSmoothEdge, bottomLeft: kSmoothEdge, bottomRight: kSmoothEdge)
+            : BorderRadius.only(topLeft: kSharpEdge, topRight: kSmoothEdge, bottomLeft: kSharpEdge, bottomRight: kSmoothEdge)
+    );
     double leftPad = 8, rightPad = 8;
     Color color, fontColor;
     MainAxisAlignment axisAlign;
+    WrapAlignment wrapAlign;
     if (isOwn) {
       // Own message
       color = widget.groupModel.getColour.withOpacity(1);
       fontColor = Colors.white;
       axisAlign = MainAxisAlignment.end;
+      wrapAlign = WrapAlignment.end;
     } else {
       // Someone else's message
       color = Colors.grey.withOpacity(0.2);
       fontColor = Colors.black;
       axisAlign = MainAxisAlignment.start;
+      wrapAlign = WrapAlignment.start;
     }
     Widget contentWidget;
     // Do we need to render this message without padding and all that?
     if (msg.isSpecial) {
-      contentWidget = msg.getContent(context, 17, fontColor);
+      contentWidget = msg.getContent(context, kFontSize, fontColor);
     } else {
       double maxWidth = MediaQuery.of(context).size.width*3/4;
       if (msg.content.length >= 35 && msg.content.length <= 60) {
         maxWidth = maxWidth * msg.content.length / 60;
       }
       contentWidget = ClipRRect(
-          borderRadius: BorderRadius.circular(5.0),
+          borderRadius: borderRadius,
           child: Container(
             constraints: BoxConstraints(maxWidth: maxWidth),
             decoration: BoxDecoration(color: color),
             child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                margin: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
                 child: SelectionArea(
-                  child: msg.getContent(context, 17, fontColor),
+                  child: msg.getContent(context, kFontSize, fontColor),
                 )
             ),
           )
       );
+    }
+    List<Widget> seenBy = [];
+    for (var member in widget.groupModel.members) {
+      if (msg.userID != member.id
+          && member.id != widget.groupModel.account.userID
+          && member.lastSeenMessageId == msg.id) {
+
+        seenBy.add(Padding(
+          padding: const EdgeInsets.only(left: 4, top: 7),
+          child: Text('✓ ${member.name}', style: kSecondaryFontStyle),
+          // child: Text('👀${member.name}', style: kSecondaryFontStyle),
+        ));
+      }
     }
     return Padding(
       padding: EdgeInsets.fromLTRB(leftPad, first ? 8 : 2, rightPad, 2),
@@ -622,7 +674,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(5, 0, 5, 3),
-                child: Text(getUserName(msg.userName, msg.userID) , style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                child: Text(getUserName(msg.userName, msg.userID) , style: kSecondaryFontStyle),
               ),
             ]
           ),
@@ -632,6 +684,22 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
               contentWidget
             ],
           ),
+          if (seenBy.isNotEmpty)
+            Row(
+              mainAxisAlignment: axisAlign,
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width*3/4,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Wrap(
+                      alignment: wrapAlign,
+                      children: seenBy,
+                    ),
+                  ),
+                 )
+              ],
+            ),
         ],
       ),
     );
@@ -746,7 +814,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
                       ),
                     ),
                     Expanded(
-                      child: MessageInput(ctrl: messageCtrl, hintText: wsChannel==null ? "Reconnecting..." : null, disabled: wsChannel==null, onChanged: (value) {
+                      child: MessageInput(ctrl: messageCtrl, fontSize: kFontSize, hintText: wsChannel==null ? "Reconnecting..." : null, disabled: wsChannel==null, onChanged: (value) {
                         if (value==null) {
                           return;
                         }
