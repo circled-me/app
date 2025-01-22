@@ -19,9 +19,32 @@ class GroupsService extends ChangeNotifier implements ListableService {
   final Map<AccountModel, WebSocket?> _wsChannels = {};
   Future<List<GroupModel>>? _groupLoader;
   Function(GroupMessage)? savedMessageReceiver;
+  int _gotoGroupID = -1;
+  String _gotoPushToken = "";
+
 
   GroupsService._();
   static final GroupsService instance = GroupsService._();
+
+  void goto(int groupID, String pushToken) {
+    _gotoGroupID = groupID;
+    _gotoPushToken = pushToken;
+    notifyListeners();
+  }
+
+  GroupModel? popGoto() {
+    if (_gotoGroupID == -1) {
+      return null;
+    }
+    for (final group in _groups) {
+      if (group.id == _gotoGroupID && group.account.pushToken == _gotoPushToken) {
+        _gotoGroupID = -1;
+        _gotoPushToken = "";
+        return group;
+      }
+    }
+    return null;
+  }
 
   Future<GroupModel?> createGroup(AccountModel account, List<GroupUser> members) async {
     final response = await account.apiClient.post("/group/create", body: jsonEncode({

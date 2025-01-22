@@ -4,7 +4,8 @@ import 'groups_list_page.dart';
 import 'group_feed_page.dart';
 
 class GroupsPage extends StatefulWidget {
-  static late int index = -1;
+  static int index = -1;
+
   GroupsPage(int idx, {Key? key}) : super(key: key) {
     index = idx;
   }

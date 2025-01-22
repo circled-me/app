@@ -240,7 +240,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     FlutterCallkitIncoming.showCallkitIncoming(params);
   }
 
-  void _handlePushNotification(Map<Object?, Object?>? data, RemoteMessage? remoteMessage) {
+  void _handlePushNotification(bool tapped, Map<Object?, Object?>? data, RemoteMessage? remoteMessage) {
     if (data == null) {
       return;
     }
@@ -253,9 +253,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         && remoteMessage.notification!.title!=null
         && remoteMessage.notification!.title!=null;
 
+    final token = data["token"] as String;
     if (data["type"] == "album") {
       AlbumsService.onReady(() {
-        final token = data["token"] as String;
         final albumId = int.parse(data["album"] as String);
 
         final album = AlbumsService.getAlbum(albumId, accountPushToken: token);
@@ -274,8 +274,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         }
        _showAlbum(album, ask, remoteMessage);
       });
-    } else if (data["type"] == "group") {
-      UniLinksService.add(Uri.parse("https://dummy/group/"));
+    } else if (tapped && data["type"] is String && (data["type"] as String).startsWith("group_")) {
+      final groupID = data["group"] as String;
+      UniLinksService.add(Uri.parse("https://dummy/group/$token/$groupID"));
     }
   }
 
@@ -322,17 +323,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         print("App was not launched by tapping a notification");
         return;
       } else {
-        print('Notification tap launched app from terminated state:\n'
-            'RemoteMessage: ${data} \n');
+        print('Notification tap launched app from terminated state:\nRemoteMessage: ${data} \n');
       }
-      _handlePushNotification(Platform.isAndroid ? data : data["data"] as Map<Object?, Object?>?, null);
+      _handlePushNotification(true, Platform.isAndroid ? data : data["data"] as Map<Object?, Object?>?, null);
     });
 
     // Handle notification taps
     Push.instance.onNotificationTap.listen((data) {
-      print('Notification was tapped:\n'
-          'Data: ${data} \n');
-      _handlePushNotification(Platform.isAndroid ? data : data["data"] as Map<Object?, Object?>?, null);
+      print('Notification was tapped:\nData: ${data} \n');
+      _handlePushNotification(true, Platform.isAndroid ? data : data["data"] as Map<Object?, Object?>?, null);
     });
 
     // Handle push notifications
@@ -346,7 +345,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (message.data == null) {
         return;
       }
-      _handlePushNotification(Platform.isAndroid ? message.data : message.data!["data"] as Map<Object?, Object?>?, message);
+      _handlePushNotification(false, Platform.isAndroid ? message.data : message.data!["data"] as Map<Object?, Object?>?, message);
     });
 
     // Handle push notifications
@@ -360,7 +359,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (message.data == null) {
         return;
       }
-      _handlePushNotification(Platform.isAndroid ? message.data : message.data!["data"] as Map<Object?, Object?>?, null);
+      _handlePushNotification(false, Platform.isAndroid ? message.data : message.data!["data"] as Map<Object?, Object?>?, null);
     });
   }
   /// Handle incoming links - the ones that the app will receive from the OS

@@ -92,18 +92,19 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
     }
     final uniLinkProcessed = UniLinksService.subscribe((Uri uri) {
       print("Tabs called with uri: "+uri.toString());
-      // Handle 'invite' uris: /invite/<server>/<token?
+      // Handle invitation URIs: /invite/<server>/<token>
       if (uri.pathSegments.length == 3 && uri.pathSegments[0] == "invite") {
         onNewInvite(uri.pathSegments[1], uri.pathSegments[2]);
         return true;
       }
-      // TODO: Handle 'chat' uris: /chat/<server>/<id>
-      // if (uri.pathSegments.length > 0 && uri.pathSegments[0] == "group") {
-      //   setState(() {
-      //     _pageViewController.jumpToPage(GroupsPage.index);
-      //   });
-      //   return true;
-      // }
+      // Handle chat URIs: /group/<token>/<id>
+      if (uri.pathSegments.length > 2 && uri.pathSegments[0] == "group") {
+        setState(() {
+          _pageViewController.jumpToPage(GroupsPage.index);
+          GroupsService.instance.goto(int.parse(uri.pathSegments[2]), uri.pathSegments[1]);
+        });
+        return true;
+      }
       return false;
     });
     if (!uniLinkProcessed && AccountsService.getAccounts.isEmpty) {
