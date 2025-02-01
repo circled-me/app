@@ -8,7 +8,7 @@ class ExternalAlbumModel extends AlbumBaseModel {
   final String link;
   final String cacheID;
   final List<AssetBaseModel> assets = [];
-  AssetBaseModel? heroAsset = null;
+  AssetBaseModel? heroAsset;
 
   ExternalAlbumModel(this.cacheID, this.link, JSONObject json) {
     name = json["name"];
@@ -44,5 +44,5 @@ class ExternalAlbumModel extends AlbumBaseModel {
   }
 
   @override
-  String get tag => "ExternalAlbum-" + cacheID;
+  String get tag => "ExternalAlbum-$cacheID";
 }

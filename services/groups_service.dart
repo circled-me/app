@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:app/helpers/toast.dart';
 import 'package:app/models/account_model.dart';
 import 'package:app/models/group_message_model.dart';
+import 'package:app/models/group_message_reaction_model.dart';
 import 'package:app/models/group_model.dart';
 import 'package:app/models/group_update_model.dart';
 import 'package:app/models/group_user_model.dart';
@@ -87,10 +88,11 @@ class GroupsService extends ChangeNotifier implements ListableService {
     return true;
   }
 
-  void reloadAccounts(AccountsService accountService) async {
-    // if (_groupLoader != null) {
-    //   await _groupLoader;
-    // }
+  Future<void> reloadAccounts(AccountsService accountService) async {
+    print("GroupService: reloadAccounts");
+    if (_groupLoader != null) {
+       await _groupLoader;
+    }
     _groupLoader = _reloadGroups(accountService);
     await _groupLoader;
     notifyListeners();
@@ -133,11 +135,6 @@ class GroupsService extends ChangeNotifier implements ListableService {
 
   void _sortGroups() {
     _groups.sort((a, b) {
-      // final au = a.hasUnread;
-      // final bu = b.hasUnread;
-      // if (au != bu) {
-      //   return au ? -1 : 1;
-      // }
       if (a.favourite != b.favourite) {
         return a.favourite ? -1 : 1;
       }
@@ -155,7 +152,8 @@ class GroupsService extends ChangeNotifier implements ListableService {
   Future<void> processMessage(AccountModel account, GroupMessage groupMessage) async {
     for (final group in _groups) {
       if (group.id == groupMessage.groupID && group.account == account) {
-        group.messages.add(groupMessage);
+        group.addMessage(groupMessage);
+        // TODO: Move this to local SQLite DB
         group.saveLocalData();
         if (savedMessageReceiver != null) {
           savedMessageReceiver!(groupMessage);
@@ -172,7 +170,16 @@ class GroupsService extends ChangeNotifier implements ListableService {
       if (group.id == seenMessage.groupID && group.account == account) {
         print("updateMemberSeenMessage: ${seenMessage.userID}, ${seenMessage.id}");
         group.updateMemberSeenMessage(seenMessage.userID, seenMessage.id);
-        // group.saveLocalData();
+        break;
+      }
+    }
+  }
+
+  Future<void> processReaction(AccountModel account, GroupMessageReaction reaction) async {
+    for (final group in _groups) {
+      if (group.id == reaction.groupID && group.account == account) {
+        print("messageReaction: ${reaction.userID}: ${reaction.reaction}");
+        group.saveMessageReaction(reaction);
         break;
       }
     }
@@ -206,7 +213,12 @@ class GroupsService extends ChangeNotifier implements ListableService {
     await _reloadGroupsFor(account);
     // TODO: Delete local messages (maybe separate method after logout?)
     final wsSub = WebSocketSubscriber(account,
-      [WebSocketService.messageTypeGroupMessage, WebSocketService.messageTypeGroupUpdate, WebSocketService.messageTypeSeenMessage],
+      [
+        WebSocketService.messageTypeGroupMessage,
+        WebSocketService.messageTypeGroupUpdate,
+        WebSocketService.messageTypeSeenMessage,
+        WebSocketService.messageTypeGroupMessageReaction,
+      ],
       (channel, message) async {
 
       _wsChannels[account] = channel;
@@ -234,6 +246,9 @@ class GroupsService extends ChangeNotifier implements ListableService {
         }
       } else if (message.type == WebSocketService.messageTypeSeenMessage) {
         processSeen(account, SeenMessage.fromJson(message.data));
+        notifyListeners();
+      } else if (message.type == WebSocketService.messageTypeGroupMessageReaction) {
+        processReaction(account, GroupMessageReaction.fromJson(message.data));
         notifyListeners();
       }
     });

@@ -67,7 +67,7 @@ class Group {
       return;
     }
     final stamp = DateTime.now().toUtc().millisecondsSinceEpoch;
-    final message = GroupMessage(0, toShareWith.id, stamp, 0, 0, "", text);
+    final message = GroupMessage(0, toShareWith.id, stamp, 0, 0, "", text, 0);
     wsChannel.add(jsonEncode(WebSocketMessage(WebSocketService.messageTypeGroupMessage, stamp, message)));
   }
 }

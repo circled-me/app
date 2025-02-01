@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:app/models/account_model.dart';
@@ -8,6 +9,7 @@ import 'package:app/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_client.dart';
+import 'group_message_reaction_model.dart';
 
 class GroupModel {
   final AccountModel account;
@@ -21,6 +23,7 @@ class GroupModel {
   final bool isAdmin;
   final List<GroupMessage> messages = [];
   final List<GroupUser> members;
+  final HashMap<int, GroupMessage> _messagesMap = HashMap();
   late Storage _storage;
   String draftMessage = "";
 
@@ -57,6 +60,19 @@ class GroupModel {
 
   Future<ApiResponse> getCallPath() async {
     return account.apiClient.get("/group/video-link?id=$id");
+  }
+
+  GroupMessage? findMessage(int id) {
+    return _messagesMap[id];
+  }
+
+  void addMessage(GroupMessage msg) {
+    // TODO: Once we move to SQLite, we can remove this check as there will be primary key constraint
+    if (_messagesMap.containsKey(msg.id)) {
+      return;
+    }
+    _messagesMap[msg.id] = msg;
+    messages.add(msg);
   }
 
   String messageTime() {
@@ -156,7 +172,7 @@ class GroupModel {
       draftMessage = jsonData["draftMessage"] as String;
       List<dynamic> jsonList = jsonData["messages"];
       for (final e in jsonList) {
-        messages.add(GroupMessage.fromJson(e));
+        addMessage(GroupMessage.fromJson(e));
       }
     } catch (e) {
       deleteLocalData(); // Will reload everything from server
@@ -166,11 +182,6 @@ class GroupModel {
   Future<void> saveLastReadMessage(GroupMessage msg) async {
     lastReadID = msg.id;
     await saveLocalData();
-    // if (msg.userID != account.userID) {
-    //   // Send 'seen update' to server only if the read message was not ours
-    //   print("Sending $lastReadID");
-    //   await saveLastReadRemote();
-    // }
   }
 
   Future<void> saveDraftMessage(String message) async {
@@ -181,18 +192,6 @@ class GroupModel {
   Future<void> saveLocalData() async {
     final msgsAsString = jsonEncode(_forLocalStorage());
     await _storage.write(msgsAsString);
-  }
-
-  Future<bool> saveLastReadRemote() async {
-    final result = await account.apiClient.post("/group/message-seen", body: jsonEncode({
-      "group_id": id,
-      "message_id": lastReadID
-    }));
-    if (result.status != 200) {
-      print("/group/message-seen error: ${result.status}:${result.body}");
-      return false;
-    }
-    return true;
   }
 
   Future<bool> saveRemote() async {
@@ -238,5 +237,16 @@ class GroupModel {
         break;
       }
     }
+  }
+
+  void saveMessageReaction(GroupMessageReaction reaction) {
+    final msg = findMessage(reaction.id);
+    if (msg == null) {
+      return;
+    }
+    // Change the reaction if it already exists
+    msg.reactions.removeWhere((r) => r.userID == reaction.userID);
+    msg.reactions.add(reaction);
+    saveLocalData();
   }
 }

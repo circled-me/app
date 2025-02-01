@@ -21,6 +21,7 @@ class AlbumListPage extends StatefulWidget {
 class _AlbumListPageState extends State<AlbumListPage> {
 
   Future<List<AlbumModel>> _getAlbums(AlbumsService albumsService, AccountsService accountsService) async {
+    // TODO: Create special refresh button or always force reload?
     await albumsService.reloadAccounts(accountsService, false);
     return albumsService.albums;
   }

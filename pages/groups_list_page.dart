@@ -299,11 +299,11 @@ class _GroupsListPageState extends State<GroupsListPage> {
           }
           final groupsToRender = snapshot.data!;
           if (groupsToRender.isEmpty) {
-            return const Center(child: EmptyInfoWidget(Icons.group, "You haven't been invited\nto any rooms yet..."));
+            return const Center(child: EmptyInfoWidget(Icons.group, "You don't have\nany rooms yet..."));
           }
           final gotoGroup = groupsService.popGoto();
           if (gotoGroup != null) {
-            Timer(Duration(milliseconds: 300), () => Navigator.of(context).pushNamed(GroupFeedPage.route, arguments: gotoGroup));
+            Timer(Duration(milliseconds: 200), () => Navigator.of(context).pushNamed(GroupFeedPage.route, arguments: gotoGroup));
           }
           return GridView.builder(
             controller: GroupsListPage.scrollController,

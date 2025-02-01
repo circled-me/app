@@ -70,12 +70,18 @@ class MessageInput extends StatelessWidget {
           fillColor: Colors.grey.withOpacity(0.1),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          label: hintText == null ? null : Row(children: [
-            const SizedBox(width: 7),
-            const SizedBox(child: Center(child: CircularProgressIndicator(color: Colors.grey, strokeWidth: 2.5)), width: 15, height: 15),
-            const SizedBox(width: 10),
-            Text(hintText!),
-          ]),
+          labelStyle: TextStyle(
+            color: Colors.grey,
+            fontSize: fontSize,
+          ),
+          label: hintText == null ? null : Row(
+            children: [
+              const SizedBox(width: 5),
+              const SizedBox(width: 10, height: 10, child: Center(child: CircularProgressIndicator(color: Colors.grey, strokeWidth: 2.5))),
+              const SizedBox(width: 10),
+              Text(hintText!),
+            ]
+          ),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(5),
               borderSide: BorderSide(
