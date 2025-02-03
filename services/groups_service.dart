@@ -155,6 +155,10 @@ class GroupsService extends ChangeNotifier implements ListableService {
         group.addMessage(groupMessage);
         // TODO: Move this to local SQLite DB
         group.saveLocalData();
+        if (groupMessage.reactionTo != 0) {
+          // No need for further processing
+          break;
+        }
         if (savedMessageReceiver != null) {
           savedMessageReceiver!(groupMessage);
         }
@@ -170,16 +174,6 @@ class GroupsService extends ChangeNotifier implements ListableService {
       if (group.id == seenMessage.groupID && group.account == account) {
         print("updateMemberSeenMessage: ${seenMessage.userID}, ${seenMessage.id}");
         group.updateMemberSeenMessage(seenMessage.userID, seenMessage.id);
-        break;
-      }
-    }
-  }
-
-  Future<void> processReaction(AccountModel account, GroupMessageReaction reaction) async {
-    for (final group in _groups) {
-      if (group.id == reaction.groupID && group.account == account) {
-        print("messageReaction: ${reaction.userID}: ${reaction.reaction}");
-        group.saveMessageReaction(reaction);
         break;
       }
     }
@@ -217,7 +211,6 @@ class GroupsService extends ChangeNotifier implements ListableService {
         WebSocketService.messageTypeGroupMessage,
         WebSocketService.messageTypeGroupUpdate,
         WebSocketService.messageTypeSeenMessage,
-        WebSocketService.messageTypeGroupMessageReaction,
       ],
       (channel, message) async {
 
@@ -246,9 +239,6 @@ class GroupsService extends ChangeNotifier implements ListableService {
         }
       } else if (message.type == WebSocketService.messageTypeSeenMessage) {
         processSeen(account, SeenMessage.fromJson(message.data));
-        notifyListeners();
-      } else if (message.type == WebSocketService.messageTypeGroupMessageReaction) {
-        processReaction(account, GroupMessageReaction.fromJson(message.data));
         notifyListeners();
       }
     });

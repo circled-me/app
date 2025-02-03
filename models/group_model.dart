@@ -71,6 +71,17 @@ class GroupModel {
     if (_messagesMap.containsKey(msg.id)) {
       return;
     }
+    if (msg.reactionTo != 0) {
+      final parent = findMessage(msg.reactionTo);
+      if (parent == null) {
+        print("Parent message not found for reaction: ${msg.reactionTo}");
+        return;
+      }
+      // Change the reaction if it already exists
+      parent.reactions.removeWhere((r) => r.userID == msg.userID);
+      parent.reactions.add(GroupMessageReaction(msg.userID, msg.content));
+      return;
+    }
     _messagesMap[msg.id] = msg;
     messages.add(msg);
   }
@@ -237,16 +248,5 @@ class GroupModel {
         break;
       }
     }
-  }
-
-  void saveMessageReaction(GroupMessageReaction reaction) {
-    final msg = findMessage(reaction.id);
-    if (msg == null) {
-      return;
-    }
-    // Change the reaction if it already exists
-    msg.reactions.removeWhere((r) => r.userID == reaction.userID);
-    msg.reactions.add(reaction);
-    saveLocalData();
   }
 }

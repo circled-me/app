@@ -20,7 +20,6 @@ class WebSocketService extends ChangeNotifier {
   static const messageTypeGroupMessage = "group_message";
   static const messageTypeGroupUpdate = "group_update";
   static const messageTypeSeenMessage = "seen_message";
-  static const messageTypeGroupMessageReaction = "group_message_reaction";
 
   // One WebSocket per account
   final Map<AccountModel, WebSocket?> _channels = {};

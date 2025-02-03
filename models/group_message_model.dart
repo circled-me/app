@@ -4,13 +4,14 @@ import 'dart:convert';
 import 'package:app/helpers/album.dart';
 import 'package:app/models/album_base_model.dart';
 import 'package:app/models/external_album_model.dart';
-import 'package:app/models/group_message_reaction_model.dart';
 import 'package:app/services/api_client.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'group_message_reaction_model.dart';
 
 class GroupMessage {
   static const plain = 0;
@@ -27,9 +28,10 @@ class GroupMessage {
   final String userName;
   final String content;
   final int replyTo;
+  final int reactionTo;
   List<GroupMessageReaction> reactions = [];
   int _type = plain;
-  GroupMessage(this.id, this.groupID, this.clientStamp, this.serverStamp, this.userID, this.userName, this.content, this.replyTo);
+  GroupMessage(this.id, this.groupID, this.clientStamp, this.serverStamp, this.userID, this.userName, this.content, this.replyTo, this.reactionTo);
 
   static final _urlDetectorRegex = RegExp(r'(.*?)(https?://\S+)');
   static final _albumRegex = RegExp(r'^https?://[^/]+/w/album/[0-9a-zA-Z]+/$');
@@ -48,6 +50,7 @@ class GroupMessage {
         json["user_name"] as String,
         json["content"] as String,
         json["reply_to"] != null ? json["reply_to"] as int : 0,
+        json["reaction_to"] != null ? json["reaction_to"] as int : 0,
     );
     if (_albumRegex.hasMatch(gm.content)) {
       gm._type = album;
@@ -76,6 +79,7 @@ class GroupMessage {
       "user_name": userName,
       "content": content,
       "reply_to": replyTo,
+      "reaction_to": reactionTo,
       "reactions": reactions.map((e) => e.toJson()).toList(),
     };
   }
