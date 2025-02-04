@@ -435,7 +435,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
         ChangeNotifierProxyProvider<AccountsService, AlbumsService>(
           create: (_) => AlbumsService.instance,
-          update: (_, accounts, __) => AlbumsService.instance..reloadAccounts(accounts, true),
+          update: (_, accounts, __) => AlbumsService.instance..reloadAccounts(accounts, false),
         ),
         ChangeNotifierProxyProvider<AccountsService, AssetsService>(
           create: (_) => AssetsService.instance,

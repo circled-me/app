@@ -366,8 +366,8 @@ class _FaceThumbsPageState extends State<FaceThumbsPage> {
                   return GridView.builder(
                       controller: _scrollController,
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisSpacing: 1,
-                        mainAxisSpacing: 1,
+                        crossAxisSpacing: 2,
+                        mainAxisSpacing: 2,
                         crossAxisCount: 3,
                       ),
                       itemCount: assetsToRender.length,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:app/app_consts.dart';
 import 'package:app/models/group_message_model.dart';
+import 'package:app/models/group_message_reaction_model.dart';
 import 'package:app/models/group_update_model.dart';
 import 'package:app/models/group_user_model.dart';
 import 'package:app/models/seen_message_model.dart';
@@ -14,6 +15,7 @@ import 'package:app/widget/giphy_widget.dart';
 import 'package:app/widget/message_input_widget.dart';
 import 'package:app/widget/multi_user_widget.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:app/helpers/toast.dart';
@@ -37,10 +39,63 @@ class GroupFeedPage extends StatefulWidget {
 class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveClientMixin<GroupFeedPage> {
   @override
   bool get wantKeepAlive => true;
+
+  // Constants
   static const kFontSize = 17.0;
+
+  static const kOtherPersonMessageColor = Color(0xfff0f0f0);
+
   static const kSmoothEdge = Radius.circular(16.0);
   static const kSharpEdge = Radius.circular(3.0);
+  static const kSmoothEdgeReply = Radius.circular(10.0);
+  static const kMainFontStyleGrey = TextStyle(color: Colors.black54, fontSize: kFontSize);
   static const kSecondaryFontStyle = TextStyle(color: Colors.grey, fontSize: 14);
+  static const kReplyToFontStyle = TextStyle(color: Colors.grey, fontSize: 12);
+  static const kReactionBiggerFontStyle = TextStyle(fontSize: 25);
+
+  static const kBordersAll = BorderRadius.all(kSmoothEdge);
+  static const kBordersAllReply = BorderRadius.all(kSmoothEdgeReply);
+  static const kBordersSharpBottomRight = BorderRadius.only(topLeft: kSmoothEdge, topRight: kSmoothEdge, bottomLeft: kSmoothEdge, bottomRight: kSharpEdge);
+  static const kBordersSharpTopRight = BorderRadius.only(topLeft: kSmoothEdge, topRight: kSharpEdge, bottomLeft: kSmoothEdge, bottomRight: kSmoothEdge);
+  static const kBordersSharpRight = BorderRadius.only(topLeft: kSmoothEdge, topRight: kSharpEdge, bottomLeft: kSmoothEdge, bottomRight: kSharpEdge);
+  static const kBordersSharpBottomLeft = BorderRadius.only(topLeft: kSmoothEdge, topRight: kSmoothEdge, bottomLeft: kSharpEdge, bottomRight: kSmoothEdge);
+  static const kBordersSharpTopLeft = BorderRadius.only(topLeft: kSharpEdge, topRight: kSmoothEdge, bottomLeft: kSmoothEdge, bottomRight: kSmoothEdge);
+  static const kBordersSharpLeft = BorderRadius.only(topLeft: kSharpEdge, topRight: kSmoothEdge, bottomLeft: kSharpEdge, bottomRight: kSmoothEdge);
+
+  static const kReactions = [
+    PopupMenuItem(
+      value: 0,
+      child: Center(child: Text("Reply")),
+    ),
+    PopupMenuItem(
+      value: 1,
+      child: Center(child: Text("Copy")),
+    ),
+    PopupMenuItem(
+      value: "❤️",
+      child: Center(child: Text("❤️", style: kReactionBiggerFontStyle)),
+    ),
+    PopupMenuItem(
+      value: "👍",
+      child: Center(child: Text("👍", style: kReactionBiggerFontStyle)),
+    ),
+    PopupMenuItem(
+      value: "😂",
+      child: Center(child: Text("😂", style: kReactionBiggerFontStyle)),
+    ),
+    PopupMenuItem(
+      value: "😮",
+      child: Center(child: Text("😮", style: kReactionBiggerFontStyle)),
+    ),
+    PopupMenuItem(
+      value: "😢",
+      child: Center(child: Text("😢", style: kReactionBiggerFontStyle)),
+    ),
+    PopupMenuItem(
+      value: "😡",
+      child: Center(child: Text("😡", style: kReactionBiggerFontStyle)),
+    ),
+  ];
 
   final TextEditingController groupNameCtrl = TextEditingController();
   final TextEditingController messageCtrl = TextEditingController();
@@ -51,7 +106,8 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
   late Future<List<GroupMessage>> _futureMessages;
   String lastEnteredValue = "";
   late Future<UserService> _userServiceFuture;
-  UserService? _userService = null;
+  UserService? _userService;
+  GroupMessage? replyTo;
 
   void _addMessage(GroupMessage gm) {
     // No messages or last message was more than 5 minutes ago, or from a different person...
@@ -468,94 +524,9 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
           ]
       ),
     );
-    // return Hero(
-    //   tag: widget.groupModel.tag,
-    //   transitionOnUserGestures: true,
-    //   child: SizedBox(
-    //     width: double.infinity,
-    //     height: 70,
-    //     child: Stack(
-    //         children: [
-    //           Container(
-    //             alignment: Alignment.bottomLeft,
-    //             decoration: BoxDecoration(color: widget.groupModel.getColour),
-    //             child: Container(
-    //                 margin: const EdgeInsets.only(bottom: 5, left: 10),
-    //                 child: Stack(
-    //                   children: [Positioned(
-    //                     left: 7,
-    //                     bottom: 7,
-    //                     child: Column(
-    //                       mainAxisSize: MainAxisSize.min,
-    //                       crossAxisAlignment: CrossAxisAlignment.start,
-    //                       children: [
-    //                         Text(
-    //                           widget.groupModel.name,
-    //                           style: const TextStyle(
-    //                             color: Colors.white,
-    //                             fontSize: 20,
-    //                             // fontWeight: FontWeight.bold,
-    //                           ),
-    //                         ),
-    //                         Text(
-    //                           widget.groupModel.userListPreview(),
-    //                           style: const TextStyle(
-    //                             color: Colors.white,
-    //                             fontSize: 14,
-    //                           ),
-    //                         ),
-    //                       ],
-    //                     ),
-    //                   )],
-    //                 )
-    //               //Text(albumsToRender[index].name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15))
-    //             ),
-    //           ),
-    //           Container(
-    //             padding: const EdgeInsets.only(bottom: 10, right: 10),
-    //             alignment: Alignment.bottomRight,
-    //             child:  Material(
-    //               color: Colors.transparent,
-    //               child: Row(
-    //                 mainAxisSize: MainAxisSize.min,
-    //                 crossAxisAlignment: CrossAxisAlignment.end,
-    //                 children: [
-    //                   if (widget.groupModel.isAdmin)
-    //                     InkWell(
-    //                       customBorder: const CircleBorder(),
-    //                       onTap: () => showPeopleDialog(MyApp.navigatorKey.currentState!.context),
-    //                       child: const Padding(
-    //                         padding: EdgeInsets.all(5.0),
-    //                         child: Icon(Icons.people,
-    //                             size: 30,
-    //                             color: Colors.white
-    //                         ),
-    //                       ),
-    //                     ),
-    //                   if (widget.groupModel.isAdmin)
-    //                     const SizedBox(width: 7,),
-    //                   InkWell(
-    //                     customBorder: const CircleBorder(),
-    //                     onTap: () => showEditDialog(MyApp.navigatorKey.currentState!.context),
-    //                     child: const Padding(
-    //                       padding: EdgeInsets.all(5.0),
-    //                       child: Icon(Icons.edit_outlined,
-    //                           size: 30,
-    //                           color: Colors.white
-    //                       ),
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //             ),
-    //           ),
-    //         ]
-    //     ),
-    //   ),
-    // );
   }
 
-  Widget _renderCluster(List<GroupMessage> cluster, int showDate) {
+  Widget _renderCluster(List<GroupMessage> cluster, int showDate, double mediaWidth) {
     final msgWidgets = <Widget>[];
     int cnt = 0;
     if (showDate > 0) {
@@ -575,7 +546,52 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
       ));
     }
     for (final msg in cluster) {
-      msgWidgets.add(_renderMessage(msg, cnt == 0, cnt == cluster.length-1));
+      bool popped = false;
+      int index = cnt;
+      final parentSetState = setState;
+      msgWidgets.add(StatefulBuilder(
+        builder: (context, setState) {
+          var _tapPosition;
+          return GestureDetector(
+            onTapDown: (details) => _tapPosition = details.globalPosition,
+            onLongPress: () => setState(() {
+              popped = true;
+              final overlay = Overlay.of(context).context.findRenderObject();
+              if (overlay == null) {
+                return;
+              }
+              showMenu(
+                popUpAnimationStyle: AnimationStyle(curve: Curves.easeInOut, duration: const Duration(milliseconds: 150)),
+                context: context,
+                constraints: BoxConstraints(maxWidth: 85),
+                shape: const RoundedRectangleBorder(borderRadius: kBordersAllReply),
+                menuPadding: const EdgeInsets.all(0),
+                position: RelativeRect.fromRect(
+                    _tapPosition! & const Size(40, 40), // smaller rect, the touch area
+                    Offset.zero & overlay.semanticBounds.size // Bigger rect, the entire screen
+                ),
+                items: kReactions).then((value) {
+                if (value == 0) {
+                  parentSetState(() {
+                    replyTo = msg;
+                    Toast.show(msg: "Replying to ${msg.userName}");
+                  });
+                } else if (value == 1) {
+                  Clipboard.setData(ClipboardData(text: msg.content));
+                  Toast.show(msg: "Copied to clipboard");
+                } else if (value is String) {
+                  // Reaction
+                  _sendReaction(msg, value);
+                }
+                setState(() {
+                  popped = false;
+                });
+              });
+            }),
+            child: _renderMessage(msg, popped, index == 0, index == cluster.length-1, mediaWidth),
+          );
+        },
+      ));
       cnt++;
     }
     msgWidgets.add(SizedBox(height: 7)); // Some padding at the bottom
@@ -592,24 +608,85 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
     return defaultName;
   }
 
-  Widget _renderMessage(GroupMessage msg, bool first, bool last) {
+  String _getReplyToName(GroupMessage msg, GroupMessage replyToMsg, bool isOwn) {
+    if (replyToMsg.userID == msg.userID) {
+      return isOwn ? "⤷ to yourself" : "⤷ ${getUserName(msg.userName, msg.userID)} to themselves";
+    }
+    // We sent this message
+    if (isOwn) {
+      return "⤷ to ${getUserName(replyToMsg.userName, replyToMsg.userID)}";
+    }
+    // Someone else sent this message to us
+    if (replyToMsg.userID == widget.groupModel.account.userID) {
+      return "⤷ ${getUserName(msg.userName, msg.userID)} to you";
+    }
+    return "⤷ ${getUserName(msg.userName, msg.userID)} to ${getUserName(replyToMsg.userName, replyToMsg.userID)}";
+  }
+
+  void _sendReaction(GroupMessage msg, String reaction) {
+    if (wsChannel == null) {
+      return;
+    }
+    final stamp = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final message = GroupMessage(0, widget.groupModel.id, stamp, 0, 0, "", reaction, 0, msg.id);
+    wsChannel!.add(jsonEncode(WebSocketMessage(WebSocketService.messageTypeGroupMessage, stamp, message)));
+  }
+
+  void _reactionsPopup(BuildContext context, GroupMessage msg) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('Reactions'),
+          content: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final reaction in msg.reactions)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Row(
+                      children: [
+                        Text(reaction.reaction, style: const TextStyle(fontSize: kFontSize, color: Colors.black), strutStyle: StrutStyle(height: 1.2, forceStrutHeight: true)),
+                        const SizedBox(width: 5),
+                        Text(getUserName("", reaction.userID), style: kMainFontStyleGrey),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _renderMessage(GroupMessage msg, bool popped, bool first, bool last, double mediaWidth) {
     final isOwn = msg.userID == widget.groupModel.account.userID;
     final borderRadius = isOwn ? (
       first && last
-        ? BorderRadius.circular(16.0)
+        ? kBordersAll
         : first
-            ? BorderRadius.only(topLeft: kSmoothEdge, topRight: kSmoothEdge, bottomLeft: kSmoothEdge, bottomRight: kSharpEdge)
+            ? kBordersSharpBottomRight
             : last
-                ? BorderRadius.only(topLeft: kSmoothEdge, topRight: kSharpEdge, bottomLeft: kSmoothEdge, bottomRight: kSmoothEdge)
-                : BorderRadius.only(topLeft: kSmoothEdge, topRight: kSharpEdge, bottomLeft: kSmoothEdge, bottomRight: kSharpEdge)
+                ? kBordersSharpTopRight
+                : kBordersSharpRight
     ) : (
       first && last
-        ? BorderRadius.circular(16.0)
+        ? kBordersAll
         : first
-          ? BorderRadius.only(topLeft: kSmoothEdge, topRight: kSmoothEdge, bottomLeft: kSharpEdge, bottomRight: kSmoothEdge)
+          ? kBordersSharpBottomLeft
           : last
-            ? BorderRadius.only(topLeft: kSharpEdge, topRight: kSmoothEdge, bottomLeft: kSmoothEdge, bottomRight: kSmoothEdge)
-            : BorderRadius.only(topLeft: kSharpEdge, topRight: kSmoothEdge, bottomLeft: kSharpEdge, bottomRight: kSmoothEdge)
+            ? kBordersSharpTopLeft
+            : kBordersSharpLeft
     );
     double leftPad = 8, rightPad = 8;
     Color color, fontColor;
@@ -623,17 +700,54 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
       wrapAlign = WrapAlignment.end;
     } else {
       // Someone else's message
-      color = Colors.grey.withOpacity(0.2);
+      color = kOtherPersonMessageColor;
       fontColor = Colors.black;
       axisAlign = MainAxisAlignment.start;
       wrapAlign = WrapAlignment.start;
     }
+    if (popped) {
+      color = Colors.black;
+      fontColor = Colors.white;
+    }
+    Widget? replyToWidget;
+    if (msg.replyTo != 0) {
+      final replyToMsg = widget.groupModel.findMessage(msg.replyTo);
+      if (replyToMsg != null) {
+        double maxWidth = mediaWidth*0.5;
+        if (replyToMsg.content.length >= 35 && replyToMsg.content.length <= 60) {
+          maxWidth = maxWidth * replyToMsg.content.length / 60;
+        }
+        replyToWidget = Column(
+          crossAxisAlignment: isOwn ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 2),
+              child: Text(_getReplyToName(msg, replyToMsg, isOwn), style: kReplyToFontStyle),
+            ),
+            ClipRRect(
+              borderRadius: kBordersAllReply,
+              child: Container(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.35)),
+                child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                    child: replyToMsg.getContent(context, kFontSize*3/4, Colors.black45)
+                ),
+              )
+            ),
+          ],
+        );
+      }
+    }
     Widget contentWidget;
     // Do we need to render this message without padding and all that?
     if (msg.isSpecial) {
-      contentWidget = msg.getContent(context, kFontSize, fontColor);
+      contentWidget = GestureDetector(
+          onDoubleTap: () => _sendReaction(msg, "❤️"),
+          child: msg.getContent(context, kFontSize, fontColor)
+      );
     } else {
-      double maxWidth = MediaQuery.of(context).size.width*3/4;
+      double maxWidth = mediaWidth*3/4;
       if (msg.content.length >= 35 && msg.content.length <= 60) {
         maxWidth = maxWidth * msg.content.length / 60;
       }
@@ -644,11 +758,55 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
             decoration: BoxDecoration(color: color),
             child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-                child: SelectionArea(
-                  child: msg.getContent(context, kFontSize, fontColor),
+                child: GestureDetector(
+                  onDoubleTap: () => _sendReaction(msg, "❤️"),
+                  child: msg.getContent(context, kFontSize, fontColor)
                 )
             ),
           )
+      );
+    }
+    if (msg.reactions.isNotEmpty) {
+      final reactions = <Widget>[];
+      for (final reaction in msg.reactions) {
+        reactions.add(Text(reaction.reaction, style: TextStyle(fontSize: kFontSize*0.9, color: Colors.black), strutStyle: StrutStyle(height: 1.2, forceStrutHeight: true)));
+      }
+      contentWidget = Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 15),
+            child: Container(child: contentWidget),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 5,
+            child: GestureDetector(
+              onTap: () => _reactionsPopup(context, msg),
+              child: ClipRRect(
+                borderRadius: kBordersAllReply,
+                child: Container(
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(1),
+                    child: ClipRRect(
+                      borderRadius: kBordersAllReply,
+                      child: Container(
+                        color: kOtherPersonMessageColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 5, right: 4, bottom: 2, top: 3),
+                          child: Row(
+                            mainAxisAlignment: axisAlign,
+                            children: reactions,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          )
+        ],
       );
     }
     List<Widget> seenBy = [];
@@ -660,7 +818,6 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
         seenBy.add(Padding(
           padding: const EdgeInsets.only(left: 4, top: 7),
           child: Text('✓ ${member.name}', style: kSecondaryFontStyle),
-          // child: Text('👀${member.name}', style: kSecondaryFontStyle),
         ));
       }
     }
@@ -668,7 +825,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
       padding: EdgeInsets.fromLTRB(leftPad, first ? 8 : 2, rightPad, 2),
       child: Column(
         children: [
-          if (first && !isOwn)
+          if (first && !isOwn && msg.replyTo == 0)
           Row(
             mainAxisAlignment: axisAlign,
             children: [
@@ -678,11 +835,14 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
               ),
             ]
           ),
+          if (replyToWidget != null)
+            Row(
+              mainAxisAlignment: axisAlign,
+              children: [replyToWidget],
+            ),
           Row(
             mainAxisAlignment: axisAlign,
-            children: [
-              contentWidget
-            ],
+            children: [contentWidget],
           ),
           if (seenBy.isNotEmpty)
             Row(
@@ -711,7 +871,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
           return;
         }
         final stamp = DateTime.now().toUtc().millisecondsSinceEpoch;
-        final message = GroupMessage(0, widget.groupModel.id, stamp, 0, 0, "", "[image:$url]");
+        final message = GroupMessage(0, widget.groupModel.id, stamp, 0, 0, "", "[image:$url]", replyTo?.id ?? 0, 0);
         wsChannel!.add(jsonEncode(WebSocketMessage(WebSocketService.messageTypeGroupMessage, stamp, message)));
       })).show(context);
   }
@@ -729,10 +889,16 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
     }
     lastEnteredValue = "";
     final stamp = DateTime.now().toUtc().millisecondsSinceEpoch;
-    final message = GroupMessage(0, widget.groupModel.id, stamp, 0, 0, "", content);
+    final message = GroupMessage(0, widget.groupModel.id, stamp, 0, 0, "", content, replyTo?.id ?? 0, 0);
     wsChannel!.add(jsonEncode(WebSocketMessage(WebSocketService.messageTypeGroupMessage, stamp, message)));
     messageCtrl.text = "";
     widget.groupModel.saveDraftMessage("");
+
+    if (replyTo != null) {
+      setState(() {
+        replyTo = null;
+      });
+    }
   }
 
   @override
@@ -747,6 +913,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
         if (messageClusters.isEmpty) {
           return const EmptyInfoWidget(Icons.message, "Start a new chat here");
         }
+        final mediaWidth = MediaQuery.of(context).size.width;
         return ListView.builder(
           controller: scrollController,
           reverse: true,
@@ -767,7 +934,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
             } else {
               showDate = 2;
             }
-            return _renderCluster(messageClusters[messageClusters.length-1-index], showDate);
+            return _renderCluster(messageClusters[messageClusters.length-1-index], showDate, mediaWidth);
           },
         );
       }
@@ -793,6 +960,45 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
                     child: mainWidget,
                   ),
                 ),
+                if (replyTo != null)
+                  Container(
+                    height: 52,
+                    width: double.infinity,
+                    color: Colors.grey.withOpacity(0.2),
+                    child: Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 17, 5, 12),
+                          child: Text.rich(TextSpan(
+                            children: [
+                              TextSpan(text: "Replying to ", style: kSecondaryFontStyle),
+                              TextSpan(text: getUserName(replyTo!.userName, replyTo!.userID), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                              TextSpan(text: ": ${replyTo!.shortPreview}", style: kSecondaryFontStyle),
+                            ]
+                          )),
+                        ),
+                        Positioned(
+                          top: 3,
+                          right: 3,
+                          child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                replyTo = null;
+                                // Scroll to the bottom
+                                if (scrollController.positions.length == 1 && scrollController.position.pixels != 0) {
+                                  scrollController.animateTo(0,
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.ease,
+                                  );
+                                }
+                              });
+                            },
+                            icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 30),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 Row(
                   children: [
                     Container(

@@ -80,6 +80,10 @@ class AssetsService extends ChangeNotifier {
       _assetsPending[account] = _fetchAssets(account, false);
       _tagsPending[account] = _fetchTags(account, false);
     }
+    for (final account in accountsService.accounts) {
+      await _assetsPending[account];
+      await _tagsPending[account];
+    }
   }
 
   void addAsset(AssetModel asset) {

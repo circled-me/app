@@ -20,9 +20,11 @@ class WebSocketService extends ChangeNotifier {
   static const messageTypeGroupMessage = "group_message";
   static const messageTypeGroupUpdate = "group_update";
   static const messageTypeSeenMessage = "seen_message";
+
   // One WebSocket per account
   final Map<AccountModel, WebSocket?> _channels = {};
   final List<WebSocketSubscriber> _subscribers = [];
+  Future<void>? _accountsReload;
 
   WebSocketService._();
   static final WebSocketService instance = WebSocketService._();
@@ -41,10 +43,6 @@ class WebSocketService extends ChangeNotifier {
   }
 
   void _notifySubscribers(AccountModel account, WebSocket? channel, WebSocketMessage? message) {
-    // // Set "subscribers" - GroupService, NotificationService, etc...
-    // if (message != null && message.type == messageTypeGroup) {
-    //   GroupsService.instance.processMessage(account, GroupMessage.fromJson(message.data));
-    // }
     // All other subscribers
     for (final subscriber in _subscribers) {
       if (subscriber.account != account) {
@@ -62,8 +60,8 @@ class WebSocketService extends ChangeNotifier {
     Timer? pingTimer;
     Future<void> reconnect() async {
       // Stop current ping timer, if any running
-      if (pingTimer != null && pingTimer!.isActive) {
-        pingTimer!.cancel();
+      if (pingTimer != null && pingTimer.isActive) {
+        pingTimer.cancel();
       }
       _notifySubscribers(account, null, null);
       // Is this account still valid? (or we've logged out)
@@ -116,11 +114,16 @@ class WebSocketService extends ChangeNotifier {
     if (_channels.containsKey(account)) {
       return;
     }
+    // Mark this account as offline but create key so we don't try to set it up again
+    _channels[account] = null;
+    // Now actually setup the connection
     _channels[account] = await _setupSocket(account);
   }
 
-  Future<void> reloadAccounts(AccountsService accountsService) async {
-    print("ws:reloadAccounts: ${accountsService.accounts.length}");
+  Future<void> _reloadAccounts(AccountsService accountsService) async {
+    print("ws:_reloadAccounts: ${accountsService.accounts.length}");
+    // print(StackTrace.current);
+
     // Add new account connections (if any)
     for (final account in accountsService.accounts) {
       await _setupAccount(account);
@@ -134,6 +137,17 @@ class WebSocketService extends ChangeNotifier {
       }
       return false;
     });
+    notifyListeners();
+  }
+
+  Future<void> reloadAccounts(AccountsService accountsService) async {
+    if (_accountsReload != null) {
+      await _accountsReload;
+    } else {
+      _accountsReload = _reloadAccounts(accountsService);
+      await _accountsReload;
+    }
+    _accountsReload = null;
     notifyListeners();
   }
 

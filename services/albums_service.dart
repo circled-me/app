@@ -66,11 +66,14 @@ class AlbumsService extends ChangeNotifier implements ListableService {
   }
 
   Future<void> reloadAccounts(AccountsService accountsService, bool force) async {
+    _reloadAccountsFuture ??= _reloadAccounts(accountsService);
     if (force) {
+      await _reloadAccountsFuture;
       _reloadAccountsFuture = _reloadAccounts(accountsService);
     }
-    return _reloadAccountsFuture;
+    await _reloadAccountsFuture!;
   }
+
   Future<void> _reloadAccounts(AccountsService accountsService) async {
     clear();
     for (final account in AccountsService.getAccounts) {
@@ -86,7 +89,6 @@ class AlbumsService extends ChangeNotifier implements ListableService {
       await exec();
     }
     _onReady.clear();
-    _reloadAccountsFuture = null;
   }
 
   static Future<void> reloadAccount(AccountModel account) async {

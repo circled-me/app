@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -36,6 +37,8 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
   int _selectedIndex = 0;
   late Future<bool> _checkAccountsFuture;
   final _pageViewController = PageController();
+  int _gotoGroup = 0;
+  String _gotoToken = '';
 
   String _generateSecureRandomString(int length) {
     final random = Random.secure();
@@ -51,7 +54,7 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
     showDialog<bool>(context: context, builder: (context) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: const Text("You have been invited!"),
-      content: Text("Welcome to the '"+server+"' server.\n\nDo you want to create username/password?\n\nIf you choose NO, a random username/password will be created for you."),
+      content: Text("Welcome to the '$server' server.\n\nDo you want to create username/password?\n\nIf you choose NO, a random username/password will be created for you."),
       actions: <Widget>[
         TextButton(
           onPressed: () {
@@ -63,16 +66,16 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
-            // Create random username/password
-            final userName = "user"+token;
+            // Create random password
+            final userName = "user$token";
             final randomPassword = _generateSecureRandomString(32);
-            // Login with random username/password
+            // Login with the new credentials
             User.login(server, token, userName, randomPassword, true).then((error) {
               if (error.isNotEmpty) {
                 Toast.show(msg: error);
                 return;
               }
-              Toast.show(msg: "Successfully logged in to your new account");
+              Toast.show(msg: "Successfully logged into your new account");
             });
           },
           child: const Text('No'),
@@ -100,8 +103,8 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
       // Handle chat URIs: /group/<token>/<id>
       if (uri.pathSegments.length > 2 && uri.pathSegments[0] == "group") {
         setState(() {
-          _pageViewController.jumpToPage(GroupsPage.index);
-          GroupsService.instance.goto(int.parse(uri.pathSegments[2]), uri.pathSegments[1]);
+          _gotoGroup = int.parse(uri.pathSegments[2]);
+          _gotoToken = uri.pathSegments[1];
         });
         return true;
       }
@@ -323,6 +326,14 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
                   ],
                 ),
               );
+            }
+            if (_gotoGroup > 0 && _gotoToken.isNotEmpty) {
+              Timer(Duration(milliseconds: 200), () => setState(() {
+                _pageViewController.jumpToPage(GroupsPage.index);
+                GroupsService.instance.goto(_gotoGroup, _gotoToken);
+                _gotoGroup = 0;
+                _gotoToken = '';
+              }));
             }
             return PageView(
               controller: _pageViewController,
