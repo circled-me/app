@@ -14,7 +14,7 @@ import 'package:app/services/groups_service.dart';
 import 'package:app/services/uni_link_service.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_app_badger/flutter_app_badger.dart';
+import 'package:flutter_app_badge/flutter_app_badge.dart';
 
 import '../services/accounts_service.dart';
 import 'package:flutter/material.dart';
@@ -244,14 +244,14 @@ class _TabsPageState extends State<TabsPage> with SingleTickerProviderStateMixin
     Widget groupsIcon = const Icon(Icons.group);
     final numUnreadGroups = groupsService.numUnreadGroups();
     if (numUnreadGroups > 0) {
-      FlutterAppBadger.updateBadgeCount(numUnreadGroups);
+      FlutterAppBadge.count(numUnreadGroups);
       groupsIcon = Badge(
         label: Text(numUnreadGroups.toString()),
         backgroundColor: Colors.deepOrange,
         child: groupsIcon,
       );
     } else {
-      FlutterAppBadger.removeBadge();
+      FlutterAppBadge.count(0);
     }
     if (numUnreadGroups != MyApp.numUnread) {
       MyApp.numUnread = numUnreadGroups;

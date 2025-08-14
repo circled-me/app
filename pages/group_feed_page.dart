@@ -322,7 +322,7 @@ class _GroupFeedPageState extends State<GroupFeedPage> with AutomaticKeepAliveCl
           builder: (context, isKeyboardVisible) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              title: const Text('Edit Group'),
+              title: const Text('Edit Room'),
               content: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Column(

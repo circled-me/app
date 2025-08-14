@@ -17,7 +17,7 @@ import 'package:proximity_screen_lock_ios/proximity_screen_lock_ios.dart';
 import 'package:provider/provider.dart';
 // import 'package:proximity_sensor/proximity_sensor.dart';
 import 'package:push/push.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
@@ -329,13 +329,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
 
     // Handle notification taps
-    Push.instance.onNotificationTap.listen((data) {
+    Push.instance.addOnNotificationTap((data) {
       print('Notification was tapped:\nData: ${data} \n');
       _handlePushNotification(true, Platform.isAndroid ? data : data["data"] as Map<Object?, Object?>?, null);
     });
 
     // Handle push notifications
-    Push.instance.onMessage.listen((message) {
+    Push.instance.addOnMessage((message) {
       print('RemoteMessage received while app is in foreground:\n'
           'RemoteMessage.Notification: ${message.notification} \n'
           ' title: ${message.notification?.title.toString()}\n'
@@ -349,7 +349,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
 
     // Handle push notifications
-    Push.instance.onBackgroundMessage.listen((message) {
+    Push.instance.addOnBackgroundMessage((message) {
       print('RemoteMessage received while app is in background:\n'
           'RemoteMessage.Notification: ${message.notification} \n'
           ' title: ${message.notification?.title.toString()}\n'
@@ -369,7 +369,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       FlutterCallkitIncoming.requestFullIntentPermission();
       // It will handle app links while the app is already started - be it in
       // the foreground or in the background.
-      _uriSub = uriLinkStream.listen((Uri? uri) {
+      _uriSub = AppLinks().uriLinkStream.listen((Uri? uri) {
         if (!mounted || uri==null) return;
         print('uni_links got uri: $uri');
         setState(() {
@@ -400,13 +400,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<void> _handleInitialUri() async {
     if (!_initialUriIsHandled) {
       _initialUriIsHandled = true;
-      print('uni_links _handleInitialUri called');
+      print('app_links _handleInitialUri called');
       try {
-        final uri = await getInitialUri();
+        final uri = await AppLinks().getInitialLink();
         if (uri == null) {
-          print('uni_links no initial uri');
+          print('app_links no initial uri');
         } else {
-          print('uni_links got initial uri: $uri');
+          print('app_links got initial uri: $uri');
         }
         if (!mounted || uri==null) return;
         setState(() => UniLinksService.add(uri));

@@ -146,12 +146,6 @@ class _ThumbsPageState extends State<ThumbsPage> with AutomaticKeepAliveClientMi
     );
   }
 
-  void addButtonPressed(AlbumsService albumsService) async {
-    Album.addToDialog(albumsService, selected, assets, (success, albumId) {
-      selected = {};
-    });
-  }
-
   void searchDialog(AssetsService assetsService, AccountModel account, StateSetter parentSetState) async {
     final allTags = await assetsService.getTags(account);
     setState((){

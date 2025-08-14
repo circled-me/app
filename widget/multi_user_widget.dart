@@ -45,7 +45,9 @@ class _MultiUserWidgetState extends State<MultiUserWidget> {
         builder: (context, setState) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            RoundInputHint(ctrl: groupMemberCtrl, hintText: "Search", onChanged: (_) => setState(() {})),
+            if (widget.users.length>6)
+            RoundInputHint(ctrl: groupMemberCtrl, hintText: "Search for users", onChanged: (_) => setState(() {})),
+            if (widget.users.length>6)
             const SizedBox(height: 10),
             Text(widget.hint, style: const TextStyle(fontSize: 13, color: Colors.grey),),
             const SizedBox(height: 5),
