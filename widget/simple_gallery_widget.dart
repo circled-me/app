@@ -25,7 +25,7 @@ class SimpleGallery extends StatefulWidget {
   final String heroVariation;
   final bool reverse;
   final PageController _pageController;
-  SimpleGallery({Key? key, required this.assets, required this.currentIndex, required this.heroVariation, this.reverse=false})
+  SimpleGallery({Key? key, required this.assets, required this.currentIndex, required this.heroVariation, this.reverse = false})
       : _pageController = PageController(initialPage: currentIndex),
         super(key: key);
 
@@ -43,26 +43,26 @@ class SimpleGallery extends StatefulWidget {
 }
 
 class _SimpleGalleryState extends State<SimpleGallery> {
-  bool initialScale=true;
+  bool initialScale = true;
   final panelController = PanelController();
   var panelState = PanelState.CLOSED;
   bool showContextButtons = false;
 
   Widget buildDragIcon() => Container(
-    width: 52,
-    height: 8,
-    decoration: BoxDecoration(
-      color: Colors.grey.withOpacity(0.5),
-      borderRadius: BorderRadius.circular(8),
-    ),
-  );
+        width: 52,
+        height: 8,
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+        ),
+      );
 
   void openMapLink(currentAsset) async {
     final googleUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=${currentAsset.gpsLat},${currentAsset.gpsLong}");
     if (await canLaunchUrl(googleUrl)) {
       await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
     } else {
-      Toast.show(msg:"Could not open the map.");
+      Toast.show(msg: "Could not open the map.");
     }
   }
 
@@ -91,19 +91,26 @@ class _SimpleGalleryState extends State<SimpleGallery> {
     return result;
   }
 
-  Widget buildMap(AssetBaseModel asset) => FlutterMap(
+  Widget buildMap(AssetBaseModel asset) {
+    var tileLayer = TileLayer(
+      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      userAgentPackageName: 'me.circled.app',
+    );
+    if (asset is AssetModel && asset.account.gaodeApiKey != null) {
+      tileLayer = TileLayer(
+        urlTemplate: 'https://webst0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}&key=${asset.account.gaodeApiKey}',
+        subdomains: ['1', '2', '3', '4'],
+        userAgentPackageName: 'me.circled.app',
+      );
+    }
+    return FlutterMap(
       options: MapOptions(
-
         initialCenter: latlong2.LatLng(asset.gpsLat!, asset.gpsLong!),
         initialZoom: 16,
         // interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
       ),
       children: [
-        TileLayer(
-          urlTemplate:
-          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'me.circled.app',
-        ),
+        tileLayer,
         CircleLayer(circles: <CircleMarker>[
           CircleMarker(
               point: latlong2.LatLng(asset.gpsLat!, asset.gpsLong!),
@@ -111,71 +118,85 @@ class _SimpleGalleryState extends State<SimpleGallery> {
               borderStrokeWidth: 2,
               useRadiusInMeter: true,
               radius: 50 // 2000 meters | 2 km
-          ),
+              ),
         ]),
       ],
     );
+  }
 
-    Widget _faceBuilder(BuildContext context, AsyncSnapshot<List<Widget>?> snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const CircularProgressIndicator();
-      }
-      if (snapshot.hasError) {
-        return Text("Error loading faces"+snapshot.error.toString());
-      }
-      if (!snapshot.hasData) {
-        return const SizedBox();
-      }
-      if (snapshot.data!.isEmpty) {
-        return const SizedBox();
-      }
-      return Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: Row(
-          children: [
-            const SizedBox(height: 10),
-            ...snapshot.data!,
-          ],
-        ),
-      );
+  Widget _faceBuilder(BuildContext context, AsyncSnapshot<List<Widget>?> snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
     }
+    if (snapshot.hasError) {
+      return Text("Error loading faces" + snapshot.error.toString());
+    }
+    if (!snapshot.hasData) {
+      return const SizedBox();
+    }
+    if (snapshot.data!.isEmpty) {
+      return const SizedBox();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          const SizedBox(height: 10),
+          ...snapshot.data!,
+        ],
+      ),
+    );
+  }
 
-    void rebuild() => setState(() {});
-    @override
-    Widget build(BuildContext context) {
-      return PageView.builder(
-        physics: initialScale
-            ? const ScrollPhysics()
-            : const NeverScrollableScrollPhysics(),
+  void rebuild() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView.builder(
+        physics: initialScale ? const ScrollPhysics() : const NeverScrollableScrollPhysics(),
         reverse: widget.reverse,
         controller: widget._pageController,
         itemCount: widget.assets.length,
         itemBuilder: (context, index) {
           late Widget detail;
           switch (widget.assets[index].type) {
-            case AssetBaseModel.typeImage: detail = SimplePhotoViewer(
-                asset: widget.assets[index],
-                heroVariation:widget.heroVariation,
-                observer: (initialSize) {
-                  setState(() {
-                    initialScale = initialSize;
+            case AssetBaseModel.typeImage:
+              detail = SimplePhotoViewer(
+                  asset: widget.assets[index],
+                  heroVariation: widget.heroVariation,
+                  observer: (initialSize) {
+                    setState(() {
+                      initialScale = initialSize;
+                    });
                   });
-                }); break;
-            case AssetBaseModel.typeVideo: detail = SimpleVideoPlayer(asset: widget.assets[index], heroVariation: widget.heroVariation,); break;
-            default: detail = const Icon(Icons.file_copy_outlined, color: Colors.grey, size: 20); break;
+              break;
+            case AssetBaseModel.typeVideo:
+              detail = SimpleVideoPlayer(
+                asset: widget.assets[index],
+                heroVariation: widget.heroVariation,
+              );
+              break;
+            default:
+              detail = const Icon(Icons.file_copy_outlined, color: Colors.grey, size: 20);
+              break;
           }
           final currentAsset = widget.assets[index];
           return SlidingUpPanel(
             defaultPanelState: panelState,
             minHeight: 0,
-            maxHeight: 2*MediaQuery.of(context).size.height/3,
+            maxHeight: 2 * MediaQuery.of(context).size.height / 3,
             controller: panelController,
             onPanelOpened: () => panelState = PanelState.OPEN,
             onPanelClosed: () => panelState = PanelState.CLOSED,
             color: Colors.transparent,
             panel: Column(
               children: [
-                AssetActions.draw(AssetActions(assets: [currentAsset], selected: {0}, callback: () => setState(() {print("callback2");})).get()),
+                AssetActions.draw(AssetActions(
+                    assets: [currentAsset],
+                    selected: {0},
+                    callback: () => setState(() {
+                          print("callback2");
+                        })).get()),
                 Expanded(
                   child: Container(
                     color: Colors.white,
@@ -184,7 +205,8 @@ class _SimpleGalleryState extends State<SimpleGallery> {
                         SizedBox(height: 5, width: MediaQuery.of(context).size.width),
                         buildDragIcon(),
                         const SizedBox(height: 15),
-                        Text(currentAsset.name+", "+currentAsset.readableSize(), style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey)),
+                        Text(currentAsset.name + ", " + currentAsset.readableSize(),
+                            style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey)),
                         const SizedBox(height: 5),
                         Text(currentAsset.createdDate, style: Theme.of(context).textTheme.titleSmall),
                         SingleChildScrollView(
@@ -192,20 +214,17 @@ class _SimpleGalleryState extends State<SimpleGallery> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              FutureBuilder(
-                                  future: _getFaces(currentAsset),
-                                  builder: _faceBuilder
-                              ),
+                              FutureBuilder(future: _getFaces(currentAsset), builder: _faceBuilder),
                             ],
                           ),
                         ),
                         if (currentAsset.location != null && currentAsset.gpsLat != null && currentAsset.gpsLong != null)
                           TextButton(
                             onPressed: () => openMapLink(currentAsset),
-                            child: Text(currentAsset.location!, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.blue)),
+                            child: Text(currentAsset.location!,
+                                textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.blue)),
                           ),
-                        if (currentAsset.gpsLat != null && currentAsset.gpsLong != null)
-                          Expanded(child: buildMap(currentAsset)),
+                        if (currentAsset.gpsLat != null && currentAsset.gpsLong != null) Expanded(child: buildMap(currentAsset)),
                       ],
                     ),
                   ),
@@ -226,17 +245,22 @@ class _SimpleGalleryState extends State<SimpleGallery> {
               }),
               dragObserver: (dragUp) {
                 if (dragUp) {
-                  setState((){panelController.open();showContextButtons=true;});
+                  setState(() {
+                    panelController.open();
+                    showContextButtons = true;
+                  });
                   return true;
                 } else if (!panelController.isPanelClosed) {
-                  setState((){panelController.close();showContextButtons=false;});
+                  setState(() {
+                    panelController.close();
+                    showContextButtons = false;
+                  });
                   return true;
                 }
                 return false;
               },
             ),
           );
-        }
-    );
+        });
   }
 }
