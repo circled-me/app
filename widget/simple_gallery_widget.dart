@@ -92,18 +92,20 @@ class _SimpleGalleryState extends State<SimpleGallery> {
   }
 
   Widget buildMap(AssetBaseModel asset) {
-    var tileLayer = TileLayer(
-      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      userAgentPackageName: 'me.circled.app',
-    );
-    if (asset is AssetModel && asset.account.gaodeApiKey != null) {
+    TileLayer tileLayer;
+    if (asset is AssetModel && asset.account.gaodeMapsEnabled) {
       tileLayer = TileLayer(
-        urlTemplate: 'https://webst0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}',
+        urlTemplate: "${asset.account.getGaodeMapsProxyURL()}?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}",
         subdomains: ['1', '2', '3', '4'],
         userAgentPackageName: 'me.circled.app',
         additionalOptions: {
-          'key': asset.account.gaodeApiKey!,
+          'token': asset.account.token,
         },
+      );
+    } else {
+      tileLayer = TileLayer(
+        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        userAgentPackageName: 'me.circled.app',
       );
     }
     return FlutterMap(

@@ -25,7 +25,7 @@ class AccountModel {
   bool? _canCreateGroups;
   bool? _hasBackup;
   bool? _isAdmin;
-  String? gaodeApiKey;
+  bool gaodeMapsEnabled;
   AccountModel(
       {required this.server,
       required this.name,
@@ -36,7 +36,7 @@ class AccountModel {
       this.bucketUsage = -1,
       this.bucketQuota = -1,
       this.pushToken = "",
-      this.gaodeApiKey});
+      this.gaodeMapsEnabled = false});
 
   bool canUploadToServer() {
     _canUpload ??= permissions.contains(UserModel.permissionPhotoUpload);
@@ -85,7 +85,7 @@ class AccountModel {
       bucketUsage: json["bucket_usage"] != null ? json["bucket_usage"].toInt() : -1,
       bucketQuota: json["bucket_quota"] != null ? json["bucket_quota"].toInt() : -1,
       permissions: json["permissions"].cast<int>(),
-      gaodeApiKey: json["gaode_api_key"],
+      gaodeMapsEnabled: json["gaode_maps_enabled"] ?? false,
     );
   }
 
@@ -97,7 +97,7 @@ class AccountModel {
       "user_id": userID,
       "permissions": permissions,
       "autoBackup": autoBackup,
-      "gaode_api_key": gaodeApiKey,
+      "gaode_maps_enabled": gaodeMapsEnabled,
     };
   }
 
@@ -179,5 +179,9 @@ class AccountModel {
 
   Future<ApiResponse> getCallPath(bool reset) async {
     return apiClient.get("/user/video-link?reset=${reset ? "1" : "0"}");
+  }
+
+  String getGaodeMapsProxyURL() {
+    return "$server/proxy-gaode-maps";
   }
 }
