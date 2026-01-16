@@ -95,7 +95,7 @@ class _SimpleGalleryState extends State<SimpleGallery> {
     TileLayer tileLayer;
     if (asset is AssetModel && asset.account.gaodeMapsEnabled) {
       tileLayer = TileLayer(
-        urlTemplate: "${asset.account.getGaodeMapsProxyURL()}?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}",
+        urlTemplate: "${asset.account.getGaodeMapsProxyURL()}?subdomain={s}&x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=7",
         subdomains: ['1', '2', '3', '4'],
         userAgentPackageName: 'me.circled.app',
         additionalOptions: {
