@@ -25,8 +25,18 @@ class AccountModel {
   bool? _canCreateGroups;
   bool? _hasBackup;
   bool? _isAdmin;
-  AccountModel({required this.server, required this.name, required this.token, required this.userID,
-      required this.permissions, this.autoBackup = false, this.bucketUsage=-1, this.bucketQuota=-1, this.pushToken=""});
+  bool gaodeMapsEnabled;
+  AccountModel(
+      {required this.server,
+      required this.name,
+      required this.token,
+      required this.userID,
+      required this.permissions,
+      this.autoBackup = false,
+      this.bucketUsage = -1,
+      this.bucketQuota = -1,
+      this.pushToken = "",
+      this.gaodeMapsEnabled = false});
 
   bool canUploadToServer() {
     _canUpload ??= permissions.contains(UserModel.permissionPhotoUpload);
@@ -59,8 +69,9 @@ class AccountModel {
   get hasQuotaInfo => bucketQuota > 0;
 
   String _readableSize(int size) {
-    return size < 1024 ? size.toString()+"MB" : (size/1024).toStringAsFixed(1)+"GB";
+    return size < 1024 ? size.toString() + "MB" : (size / 1024).toStringAsFixed(1) + "GB";
   }
+
   get getUsageAsString => _readableSize(bucketUsage);
   get getQuotaAsString => _readableSize(bucketQuota);
 
@@ -71,36 +82,39 @@ class AccountModel {
       token: json["token"],
       userID: json["user_id"],
       autoBackup: json["autoBackup"],
-      bucketUsage: json["bucket_usage"]!=null ? json["bucket_usage"].toInt() : -1,
-      bucketQuota: json["bucket_quota"]!=null ? json["bucket_quota"].toInt() : -1,
+      bucketUsage: json["bucket_usage"] != null ? json["bucket_usage"].toInt() : -1,
+      bucketQuota: json["bucket_quota"] != null ? json["bucket_quota"].toInt() : -1,
       permissions: json["permissions"].cast<int>(),
+      gaodeMapsEnabled: json["gaode_maps_enabled"] ?? false,
     );
   }
 
   JSONObject toJson() {
     return {
       "server": server,
-      "token" : token,
-      "name"  : name,
+      "token": token,
+      "name": name,
       "user_id": userID,
       "permissions": permissions,
       "autoBackup": autoBackup,
+      "gaode_maps_enabled": gaodeMapsEnabled,
     };
   }
 
-  Map<String, String> get requestHeaders => {"Cookie": "token="+token};
+  Map<String, String> get requestHeaders => {"Cookie": "token=" + token};
 
-  String get getDisplayName => _removeEmailDomain(name)+"@"+_removeProtocol(serverName);
-  String get identifier => userID.toString()+"#"+serverName;
+  String get getDisplayName => _removeEmailDomain(name) + "@" + _removeProtocol(serverName);
+  String get identifier => userID.toString() + "#" + serverName;
 
   Future<ApiResponse> logout() async {
     await apiClient.emptyCache();
     await Push.instance.token.then((token) {
-      http.post(Uri.parse("$_pushServer/deregister"), body: jsonEncode({
-        "type": Platform.isIOS ? 0 : 1, // only iOS and Android supported
-        "user_token": pushToken,
-        "service_token": token!
-      }));
+      http.post(Uri.parse("$_pushServer/deregister"),
+          body: jsonEncode({
+            "type": Platform.isIOS ? 0 : 1, // only iOS and Android supported
+            "user_token": pushToken,
+            "service_token": token!
+          }));
     });
     return apiClient.post("/user/logout");
   }
@@ -112,6 +126,7 @@ class AccountModel {
     }
     return s.substring(0, index);
   }
+
   String _removeProtocol(String url) {
     if (url.toLowerCase().startsWith("https://")) {
       return url.substring(8);
@@ -136,9 +151,9 @@ class AccountModel {
         "badge_count": MyApp.numUnread,
       });
       print("PUSH PAYLOAD: $payload");
-      http.post(Uri.parse(_pushServer+"/register"), body: payload).then((response) {
+      http.post(Uri.parse(_pushServer + "/register"), body: payload).then((response) {
         if (response.statusCode != 200) {
-          print(response.request!.url.toString()+" was not successful");
+          print(response.request!.url.toString() + " was not successful");
           print(response.body);
         }
       });
@@ -154,8 +169,8 @@ class AccountModel {
     permissions.clear();
     permissions.addAll(json["permissions"].cast<int>());
 
-    bucketUsage = json["bucket_usage"]!=null ? json["bucket_usage"].toInt() : -1;
-    bucketQuota = json["bucket_quota"]!=null ? json["bucket_quota"].toInt() : -1;
+    bucketUsage = json["bucket_usage"] != null ? json["bucket_usage"].toInt() : -1;
+    bucketQuota = json["bucket_quota"] != null ? json["bucket_quota"].toInt() : -1;
     pushToken = json["push_token"];
 
     updatePushServer();
@@ -164,5 +179,9 @@ class AccountModel {
 
   Future<ApiResponse> getCallPath(bool reset) async {
     return apiClient.get("/user/video-link?reset=${reset ? "1" : "0"}");
+  }
+
+  String getGaodeMapsProxyURL() {
+    return "$server/proxy-gaode-maps";
   }
 }
