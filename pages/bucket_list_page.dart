@@ -1,10 +1,8 @@
-import 'dart:convert';
-import 'dart:collection';
-
 import 'package:app/app_consts.dart';
 import 'package:app/pages/settings_page.dart';
 import 'package:app/services/bucket_service.dart';
 import 'package:app/widget/edit_bucket_widget.dart';
+import 'package:app/widget/settings_ui.dart';
 import '../models/account_model.dart';
 import '../models/bucket_model.dart';
 import 'package:flutter/material.dart';
@@ -25,22 +23,20 @@ class _BucketListPageState extends State<BucketListPage> {
     return bs.buckets;
   }
 
+  String _subtitleFor(BucketModel bucket) {
+    if (bucket.storageType == BucketModel.storageTypeFile) {
+      return "Disk path: " + bucket.path;
+    }
+    return "S3 Bucket" + (bucket.path != "" ? ", prefix: " + bucket.path : " without prefix");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(54),
-        child: Hero(
-          tag: "Storage-"+widget.account.identifier,
-          transitionOnUserGestures: true,
-          child: SizedBox(width: 120, height: 54,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(shape: const RoundedRectangleBorder()),
-              onPressed: () => SettingsPage.navigatorKey.currentState!.popUntil((route) => route.isFirst),
-              child: const Text("Storage", style: TextStyle(fontSize: 30, color: AppConst.fontColor, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ),
+      appBar: SettingsHeroBar(
+        tag: "Storage-" + widget.account.identifier,
+        title: "Storage",
+        onBack: () => SettingsPage.navigatorKey.currentState!.popUntil((route) => route.isFirst),
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder<List<BucketModel>>(
@@ -50,70 +46,51 @@ class _BucketListPageState extends State<BucketListPage> {
             return const Center(child: CircularProgressIndicator());
           }
           final bucketsToRender = snapshot.data!;
-          return GridView.builder(
+          if (bucketsToRender.isEmpty) {
+            return Center(
+              child: Text("No storage buckets yet", style: SettingsStyles.caption),
+            );
+          }
+          return ListView.separated(
             controller: BucketListPage.scrollController,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisSpacing: 0,
-              mainAxisSpacing: 0,
-              crossAxisCount: 1,
-              childAspectRatio: 5,
-            ),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
             itemCount: bucketsToRender.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.12)),
             itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () => EditBucketWidget.show(bucketsToRender[index], (success) => { if(success) setState(() {})}, context, "", ""),
-                  child: Stack(
-                    children: [
-                      Container(
-                        alignment: Alignment.bottomLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 0, left: 10),
-                          child: Stack(
-                            children: [Positioned(
-                              left: 2,
-                              bottom: 5,
-                              child: Row(
-                                children: [
-                                  Icon(bucketsToRender[index].storageType == BucketModel.storageTypeFile ? Icons.storage : Icons.cloud_circle, size: 40, color: AppConst.mainColor,),
-                                  const SizedBox(width: 12,),
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        bucketsToRender[index].name,
-                                        style: const TextStyle(color: AppConst.mainColor, fontSize: 20, fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(bucketsToRender[index].storageType == BucketModel.storageTypeFile
-                                          ? "Disk path: "+bucketsToRender[index].path
-                                          : "S3 Bucket" + (bucketsToRender[index].path != "" ? ", prefix: "+bucketsToRender[index].path : " without prefix"),
-                                        style: const TextStyle(color: AppConst.mainColor, fontSize: 14),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            )],
-                          )
-                        ),
-                      ),
-                    ]
-                  ),
-                );
-            }
+              final bucket = bucketsToRender[index];
+              return SettingsListRow(
+                icon: bucket.storageType == BucketModel.storageTypeFile
+                    ? Icons.storage
+                    : Icons.cloud_circle,
+                title: bucket.name,
+                subtitle: _subtitleFor(bucket),
+                onTap: () => EditBucketWidget.show(
+                  bucket,
+                  (success) => {if (success) setState(() {})},
+                  context,
+                  "",
+                  "",
+                ),
+              );
+            },
           );
-        }
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterFloat,
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
         foregroundColor: AppConst.mainColor,
         heroTag: null,
-        onPressed: () => EditBucketWidget.show(BucketModel.empty(widget.account), (success) => { if(success) setState(() {})}, context, "", ""),
+        elevation: 2,
+        onPressed: () => EditBucketWidget.show(
+          BucketModel.empty(widget.account),
+          (success) => {if (success) setState(() {})},
+          context,
+          "",
+          "",
+        ),
         child: const Icon(Icons.add),
       ),
     );
   }
 }
-
-

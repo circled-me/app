@@ -3,6 +3,7 @@ import 'package:app/models/user_model.dart';
 import 'package:app/pages/settings_page.dart';
 import 'package:app/services/user_service.dart';
 import 'package:app/widget/edit_user_widget.dart';
+import 'package:app/widget/settings_ui.dart';
 import '../models/account_model.dart';
 import 'package:flutter/material.dart';
 
@@ -27,19 +28,10 @@ class _UserListPageState extends State<UserListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(54),
-        child: Hero(
-          tag: "Users-"+widget.account.identifier,
-          transitionOnUserGestures: true,
-          child: SizedBox(width: 120, height: 54,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(shape: const RoundedRectangleBorder()),
-              onPressed: () => SettingsPage.navigatorKey.currentState!.popUntil((route) => route.isFirst),
-              child: const Text("Users", style: TextStyle(fontSize: 30, color: AppConst.fontColor, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ),
+      appBar: SettingsHeroBar(
+        tag: "Users-" + widget.account.identifier,
+        title: "Users",
+        onBack: () => SettingsPage.navigatorKey.currentState!.popUntil((route) => route.isFirst),
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder<List<UserModel>>(
@@ -49,65 +41,47 @@ class _UserListPageState extends State<UserListPage> {
             return const Center(child: CircularProgressIndicator());
           }
           final usersToRender = snapshot.data!;
-          return GridView.builder(
+          if (usersToRender.isEmpty) {
+            return Center(
+              child: Text("No users yet", style: SettingsStyles.caption),
+            );
+          }
+          return ListView.separated(
             controller: UserListPage.scrollController,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisSpacing: 0,
-              mainAxisSpacing: 0,
-              crossAxisCount: 1,
-              childAspectRatio: 5,
-            ),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
             itemCount: usersToRender.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.12)),
             itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () => EditUserWidget.show(usersToRender[index], (success) => { if(success) setState(() {})}, context, "", ""),
-                  child: Stack(
-                    children: [
-                      Container(
-                        alignment: Alignment.bottomLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 0, left: 10),
-                          child: Stack(
-                            children: [Positioned(
-                              left: 2,
-                              bottom: 5,
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.account_circle, size: 40, color: AppConst.mainColor,),
-                                  const SizedBox(width: 12,),
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        usersToRender[index].name,
-                                        style: const TextStyle(color: AppConst.mainColor, fontSize: 20, fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        usersToRender[index].email,
-                                        style: const TextStyle(color: AppConst.mainColor, fontSize: 14),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            )],
-                          )
-                        ),
-                      ),
-                    ]
-                  ),
-                );
-            }
+              final user = usersToRender[index];
+              return SettingsListRow(
+                icon: Icons.account_circle,
+                title: user.name,
+                subtitle: user.email,
+                onTap: () => EditUserWidget.show(
+                  user,
+                  (success) => {if (success) setState(() {})},
+                  context,
+                  "",
+                  "",
+                ),
+              );
+            },
           );
-        }
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterFloat,
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
         heroTag: null,
         foregroundColor: AppConst.mainColor,
-        onPressed: () => EditUserWidget.show(UserModel.empty(widget.account), (success) => { if(success) setState(() {})}, context, "", ""),
+        elevation: 2,
+        onPressed: () => EditUserWidget.show(
+          UserModel.empty(widget.account),
+          (success) => {if (success) setState(() {})},
+          context,
+          "",
+          "",
+        ),
         child: const Icon(Icons.add),
       ),
     );

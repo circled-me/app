@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:app/models/user_model.dart';
 import 'package:app/services/bucket_service.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
+import 'package:app/widget/settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:app/helpers/toast.dart';
 import 'package:share_plus/share_plus.dart';
@@ -58,7 +59,7 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
     final newQuota = int.tryParse(userQuotaCtrl.text);
     if (userQuotaCtrl.text.isNotEmpty) {
       if (newQuota != null) {
-        widget.user.quota = newQuota!;
+        widget.user.quota = newQuota;
       } else {
         Toast.show(msg: "Quota should be blank or a number");
         return;
@@ -102,25 +103,24 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
   }
 
   Widget _buildCheckbox(String title, String hint, int value, {bool enabled=true}) {
-    return SizedBox(height: 60,
-      child: CheckboxListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(title),
-        subtitle: Text(hint),
-        enabled: enabled,
-        value: widget.user.permissions.contains(value),
-        onChanged: (nv) => setState(() {
-          if (nv!=null && nv && !widget.user.permissions.contains(value)) {
-            widget.user.permissions.add(value);
-          } else {
-            widget.user.permissions.remove(value);
-            if (value == UserModel.permissionPhotoUpload) {
-              // permissionPhotoBackup is dependant on permissionPhotoUpload
-              widget.user.permissions.remove(UserModel.permissionPhotoBackup);
-            }
+    return CheckboxListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      title: Text(title, style: SettingsStyles.itemTitle),
+      subtitle: Text(hint, style: SettingsStyles.caption),
+      enabled: enabled,
+      controlAffinity: ListTileControlAffinity.trailing,
+      value: widget.user.permissions.contains(value),
+      onChanged: (nv) => setState(() {
+        if (nv!=null && nv && !widget.user.permissions.contains(value)) {
+          widget.user.permissions.add(value);
+        } else {
+          widget.user.permissions.remove(value);
+          if (value == UserModel.permissionPhotoUpload) {
+            // permissionPhotoBackup is dependant on permissionPhotoUpload
+            widget.user.permissions.remove(UserModel.permissionPhotoBackup);
           }
-        }),
-      ),
+        }
+      }),
     );
   }
 
@@ -137,7 +137,7 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           scrollable: true,
           insetPadding: const EdgeInsets.all(10),
-          title: const Text('User'),
+          title: Text(widget.user.id > 0 ? "Edit user" : "New user"),
           content: SizedBox(
             width: MediaQuery.of(context).size.width,
             child: Column(
@@ -145,23 +145,21 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.user.id>0) RoundInputHint(ctrl: userEmailCtrl, hintText: "Login", autoFocus: true, disabled: true, compulsory: false,),
-                if (widget.user.id>0) const SizedBox(height: 12),
+                if (widget.user.id>0) const SizedBox(height: SettingsStyles.itemGap),
                 RoundInputHint(ctrl: userNameCtrl, hintText: "Name", autoFocus: true, compulsory: true,),
-                const SizedBox(height: 12),
+                const SizedBox(height: SettingsStyles.itemGap),
                 RoundInputHint(ctrl: userQuotaCtrl, hintText: "Quota in MB (blank for unlimited)", keyboard: TextInputType.number),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Text("Storage:"),
-                    const SizedBox(width: 10),
-                    DropdownButton<int>(
-                      isDense: false,
-                      value: widget.user.bucket == 0 ? null : widget.user.bucket,
-                      onChanged: (newValue) => setState(() => widget.user.bucket = newValue ?? 0),
-                      items: bucketService.getItems(),
-                    ),
-                  ],
+                const SizedBox(height: SettingsStyles.itemGap),
+                SettingsDropdownField<int>(
+                  label: "Storage",
+                  value: widget.user.bucket == 0 ? null : widget.user.bucket,
+                  onChanged: (newValue) => setState(() => widget.user.bucket = newValue ?? 0),
+                  items: bucketService.getItems(),
                 ),
+                const SizedBox(height: 8),
+                const Divider(height: 20),
+                Text("Permissions", style: SettingsStyles.sectionTitle),
+                const SizedBox(height: 4),
                 _buildCheckbox("Admin", "Has all permissions", UserModel.permissionAdmin),
                 _buildCheckbox("Upload assets", "Can upload and create albums", UserModel.permissionPhotoUpload),
                 _buildCheckbox("Asset backup", "Can backup", UserModel.permissionPhotoBackup, enabled: widget.user.permissions.contains(UserModel.permissionPhotoUpload)),
@@ -170,6 +168,10 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
             ),
           ),
           actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             if (widget.user.id > 0) TextButton(
               child: const Text('Re-Invite'),
               onPressed: () => _showInvite(context),
@@ -177,10 +179,6 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
             TextButton(
               child: const Text('Save'),
               onPressed: () => _userSave(context),
-            ),
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         );

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:app/helpers/preferences.dart';
 import 'package:app/helpers/toast.dart';
+import 'package:app/widget/settings_ui.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -64,13 +65,13 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
   String _getMainStatus(BackupService backup) {
     switch (backup.status) {
       case BackupServiceStatus.complete:
-        return "All "+backup.numTotal.toString() + " assets uploaded";
+        return "All " + backup.numTotal.toString() + " assets uploaded";
       case BackupServiceStatus.cancelling:
         return "Cancelling";
       case BackupServiceStatus.error:
         return "Error";
       case BackupServiceStatus.inProgress:
-        return (backup.numTotal-backup.numPending).toString()+" of "+backup.numTotal.toString();
+        return (backup.numTotal - backup.numPending).toString() + " of " + backup.numTotal.toString();
       case BackupServiceStatus.stopped:
       case BackupServiceStatus.pending:
         return "Backup Service";
@@ -84,119 +85,129 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
       Toast.show(msg: info["error"]);
       return;
     }
-    Share.share(account.server+info["path"],
-      subject:"Use this link to upload",
+    Share.share(account.server + info["path"],
+      subject: "Use this link to upload",
       sharePositionOrigin: const Rect.fromLTWH(50, 150, 10, 10), // TODO: Better coordinates
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(7.0),
-      child: Consumer<BackupService>(
-        builder: (context, backup, child) {
-          // TODO
-          double value = backup.numQueued>0 && backup.numPending>0 ? backup.numDone / backup.numQueued : 1;
-          final canEditExclude = _excludeAlbumsLoaded && backup.isStopped;
-          return Column(
-            children: [
-              Row(
-                children: [
-                  CircularProgressIndicator(value: value, strokeWidth: 7,),
-                  const SizedBox(width: 15,),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_getMainStatus(backup), overflow: TextOverflow.fade, style: const TextStyle(fontSize: 18),),
-                      Text(backup.statusString != "" ? backup.statusString : "Idle", overflow: TextOverflow.fade, style: const TextStyle(fontSize: 14, color: Colors.grey),),
-                    ],
-                  )
-                ],
+    return Consumer<BackupService>(
+      builder: (context, backup, child) {
+        double value = backup.numQueued > 0 && backup.numPending > 0 ? backup.numDone / backup.numQueued : 1;
+        final canEditExclude = _excludeAlbumsLoaded && backup.isStopped;
+        final statusDetail = backup.statusString != "" ? backup.statusString : "Idle";
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
                 children: [
-                  SizedBox(width: 120, height: 30,
-                    child: ElevatedButton(
-                      onPressed: backup.isRunning || backup.status == BackupServiceStatus.cancelling ? null : () => backup.start(),
-                      child: const Text("Start"),
+                  SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: 5,
                     ),
                   ),
-                  const SizedBox(width: 20,),
-                  SizedBox(width: 120, height: 30,
-                    child: ElevatedButton(
-                      onPressed: backup.isStopped || backup.status == BackupServiceStatus.cancelling ? null : () => backup.cancel(),
-                      child: const Text("Stop"),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getMainStatus(backup),
+                          overflow: TextOverflow.ellipsis,
+                          style: SettingsStyles.itemTitle,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          statusDetail,
+                          overflow: TextOverflow.ellipsis,
+                          style: SettingsStyles.caption,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text("Exclude albums", overflow: TextOverflow.fade, style: TextStyle(fontSize: 18),),
-              ),
-              const SizedBox(height: 8),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Device albums to skip during backup",
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+            const SizedBox(height: 14),
+            SettingsButtonRow(
+              children: [
+                SettingsPrimaryButton(
+                  label: "Start",
+                  icon: Icons.play_arrow,
+                  onPressed: backup.isRunning || backup.status == BackupServiceStatus.cancelling
+                      ? null
+                      : () => backup.start(),
                 ),
+                SettingsSecondaryButton(
+                  label: "Stop",
+                  icon: Icons.stop,
+                  onPressed: backup.isStopped || backup.status == BackupServiceStatus.cancelling
+                      ? null
+                      : () => backup.cancel(),
+                ),
+              ],
+            ),
+            const SizedBox(height: SettingsStyles.sectionGap),
+            Text("Exclude albums", style: SettingsStyles.itemTitle),
+            const SizedBox(height: 4),
+            Text(
+              "Device albums to skip during backup",
+              style: SettingsStyles.caption,
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.withOpacity(0.22)),
               ),
-              const SizedBox(height: 10),
-              Row(
+              child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       _excludeAlbumsLoaded ? _excludeAlbumsSummary() : "Loading...",
                       style: TextStyle(
                         fontSize: 14,
-                        color: _excludeAlbums.isEmpty ? Colors.grey : null,
+                        color: !_excludeAlbumsLoaded || _excludeAlbums.isEmpty
+                            ? Colors.grey.shade600
+                            : Colors.black87,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    height: 40,
-                    child: ElevatedButton(
-                      onPressed: canEditExclude ? _openExcludeAlbumsPicker : null,
-                      child: const Text("Select"),
-                    ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    style: SettingsStyles.outlinedButton(),
+                    onPressed: canEditExclude ? _openExcludeAlbumsPicker : null,
+                    child: const Text("Select"),
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
-              const Row(
-                children: [
-                  Text("Manual Uploads", overflow: TextOverflow.fade, style: TextStyle(fontSize: 18),),
-                ]
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(width: 120, height: 30,
-                    child: ElevatedButton(
-                      onPressed: null,
-                      child: Text("From App"),
-                    ),
-                  ),
-                  const SizedBox(width: 20,),
-                  SizedBox(width: 120, height: 30,
-                    child: ElevatedButton(
-                      onPressed: () => share(backup.account),
-                      child: const Text("Share Link"),
-                    ),
-                  ),
-                ],
-              )
-            ],
-          );
-        },
-      )
+            ),
+            const SizedBox(height: SettingsStyles.sectionGap),
+            Text("Manual uploads", style: SettingsStyles.itemTitle),
+            const SizedBox(height: 10),
+            SettingsPrimaryButton(
+              label: "Share Link",
+              icon: Icons.link,
+              expanded: true,
+              onPressed: () => share(backup.account),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -310,22 +321,27 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
       content = SizedBox(
         width: media.size.width,
         height: media.size.height * 0.5,
-        child: ListView.builder(
+        child: ListView.separated(
           shrinkWrap: true,
           itemCount: _albums.length,
+          separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.15)),
           itemBuilder: (context, index) {
             final album = _albums[index];
             final subtitle = album.missing
                 ? "Not found on this device"
                 : (album.count != null ? "${album.count} items" : null);
             return CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(album.name),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+              controlAffinity: ListTileControlAffinity.trailing,
+              title: Text(album.name, style: SettingsStyles.itemTitle),
               subtitle: subtitle != null
-                  ? Text(subtitle, style: TextStyle(
-                      color: album.missing ? Colors.orange : Colors.grey,
-                      fontSize: 12,
-                    ))
+                  ? Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: album.missing ? Colors.orange : Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    )
                   : null,
               value: _selected.contains(album.name),
               onChanged: (checked) {
@@ -357,9 +373,10 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
           onPressed: _loading
               ? null
               : () {
-                  final selected = _selected.toList()..sort(
-                    (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
-                  );
+                  final selected = _selected.toList()
+                    ..sort(
+                      (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+                    );
                   Navigator.of(context).pop(selected);
                 },
           child: const Text("Save"),

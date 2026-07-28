@@ -1,8 +1,8 @@
 import 'package:app/app_consts.dart';
 import 'package:app/pages/login_page.dart';
-import 'package:app/services/backup_service.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:app/widget/account_widget.dart';
+import 'package:app/widget/settings_ui.dart';
 
 import '../services/accounts_service.dart';
 import 'package:flutter/material.dart';
@@ -34,48 +34,70 @@ class _SettingsMainPageState extends State<SettingsMainPage> with AutomaticKeepA
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        //physics: const NeverScrollableScrollPhysics(),
         physics: const ClampingScrollPhysics(),
         child: Column(
           children: [
             Container(
               width: w,
-              height: h*0.1,
+              height: h * 0.1,
               decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("img/strip_hero2.png"),
-                    fit: BoxFit.fill,
-                  )
+                image: DecorationImage(
+                  image: AssetImage("img/strip_hero2.png"),
+                  fit: BoxFit.fill,
+                ),
               ),
             ),
-            Container(
-              width: w,
-              margin: const EdgeInsets.only(left: 15, right: 15),
-              child:Column(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                SettingsStyles.pagePadding,
+                8,
+                SettingsStyles.pagePadding,
+                SettingsStyles.pagePadding,
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Text("Accounts", style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 10,),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle, size: 35, color: AppConst.mainColor,),
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(fullscreenDialog: true, builder: (context) => const LoginPage(closable: true,))),
+                      Expanded(
+                        child: Text("Accounts", style: SettingsStyles.pageTitle),
+                      ),
+                      Material(
+                        color: AppConst.mainColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              fullscreenDialog: true,
+                              builder: (context) => const LoginPage(closable: true),
+                            ),
+                          ),
+                          child: const SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: Icon(Icons.add, size: 26, color: AppConst.mainColor),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15),
-                  ListView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: allAccounts,
-                    shrinkWrap: true,
+                  const SizedBox(height: 6),
+                  Text(
+                    accountsService.accounts.isEmpty
+                        ? "Add an account to get started"
+                        : "Manage backup, users, and storage",
+                    style: SettingsStyles.caption,
                   ),
+                  const SizedBox(height: 18),
+                  ...allAccounts,
                 ],
-              )
-           ),
-        ]
-      )
-    )
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

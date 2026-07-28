@@ -2,6 +2,7 @@ import 'package:app/app_consts.dart';
 import 'package:app/helpers/user.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
 import 'package:app/helpers/toast.dart';
+import 'package:app/widget/settings_ui.dart';
 
 import '../main.dart';
 import 'package:flutter/material.dart';
@@ -57,15 +58,19 @@ class _LoginPageState extends State<LoginPage>
       context: rootContext,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return const Dialog(
-          child: Padding(
-            padding: EdgeInsets.all(20),
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             child: Row(
-              //mainAxisSize: MainAxisSize.max,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 20),
-                Text("Logging in..."),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+                SizedBox(width: 16),
+                Expanded(child: Text("Logging in...")),
               ],
             ),
           ),
@@ -120,119 +125,168 @@ class _LoginPageState extends State<LoginPage>
     double w = MediaQuery.of(context).size.width;
     double h = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar:   AppBar(
+      appBar: AppBar(
         backgroundColor: Colors.black,
         toolbarHeight: 0,
       ),
-      //resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        //physics: const NeverScrollableScrollPhysics(),
         physics: const ClampingScrollPhysics(),
         child: Column(
           children: [
             Container(
               width: w,
-              height: h*0.1,
+              height: h * 0.1,
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage("img/strip_hero2.png"),
                   fit: BoxFit.fill,
-                )
+                ),
               ),
               child: widget.closable
-                ? Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      onPressed: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      icon: const Icon(Icons.cancel_outlined, color: Colors.white, size: 35)
-                    ),
-                )
-                : null,
+                  ? Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 6, right: 8),
+                        child: Material(
+                          color: Colors.black.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              if (Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            child: const SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: Icon(Icons.close, color: Colors.white, size: 22),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : null,
             ),
-            Container(
-              width: w,
-              margin: const EdgeInsets.only(left: 20, right: 20),
-              child:Column(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                SettingsStyles.pagePadding,
+                8,
+                SettingsStyles.pagePadding,
+                SettingsStyles.pagePadding,
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Hello", style: TextStyle(
-                    fontSize: 60,
-                    fontWeight: FontWeight.bold,
-                  )),
-                  const SizedBox(height: 10),
-                  Text(loginTextTitles[loginType], style: const TextStyle(fontSize: 20,color: Colors.grey)),
-                  const SizedBox(height: 20),
-                  RoundInputHint(ctrl: serverAddrCtrl, hintText: "Server", icon: Icons.device_hub, disabled: invited, keyboard: TextInputType.url,),
-                  if (loginType==invitation && !invited) const SizedBox(height: 15),
-                  if (loginType==invitation && !invited) RoundInputHint(ctrl: tokenCtrl, hintText: "Token", icon: Icons.generating_tokens, disabled: invited),
-                  const SizedBox(height: 15),
-                  RoundInputHint(ctrl: emailAddrCtrl, hintText: "Username", icon: Icons.account_circle, keyboard: TextInputType.name,),
-                  const SizedBox(height: 15),
-                  RoundInputHint(
-                    ctrl: passwordCtrl,
-                    hintText: "Password",
-                    isPassword: true,
-                    icon: Icons.password_outlined,
-                    keyboard: TextInputType.visiblePassword,
-                    inputAction: TextInputAction.go,
-                    onSubmitted: (_) => _doLogin(),
+                  const Text(
+                    "Hello",
+                    style: TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.8,
+                      color: Colors.black87,
+                    ),
                   ),
-                  Visibility(
-                    visible: loginType > normalLogin,
+                  const SizedBox(height: 6),
+                  Text(
+                    loginTextTitles[loginType],
+                    style: SettingsStyles.itemSubtitle.copyWith(fontSize: 16),
+                  ),
+                  const SizedBox(height: 20),
+                  SettingsCard(
+                    margin: EdgeInsets.zero,
+                    padding: const EdgeInsets.all(16),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 15),
-                        RoundInputHint(ctrl: passwordConfirmCtrl, hintText: "Confirm Password", isPassword: true, icon: Icons.password_outlined),
+                        RoundInputHint(
+                          ctrl: serverAddrCtrl,
+                          hintText: "Server",
+                          icon: Icons.device_hub,
+                          disabled: invited,
+                          keyboard: TextInputType.url,
+                        ),
+                        if (loginType == invitation && !invited) ...[
+                          const SizedBox(height: SettingsStyles.itemGap),
+                          RoundInputHint(
+                            ctrl: tokenCtrl,
+                            hintText: "Token",
+                            icon: Icons.generating_tokens,
+                            disabled: invited,
+                          ),
+                        ],
+                        const SizedBox(height: SettingsStyles.itemGap),
+                        RoundInputHint(
+                          ctrl: emailAddrCtrl,
+                          hintText: "Username",
+                          icon: Icons.account_circle,
+                          keyboard: TextInputType.name,
+                        ),
+                        const SizedBox(height: SettingsStyles.itemGap),
+                        RoundInputHint(
+                          ctrl: passwordCtrl,
+                          hintText: "Password",
+                          isPassword: true,
+                          icon: Icons.password_outlined,
+                          keyboard: TextInputType.visiblePassword,
+                          inputAction: TextInputAction.go,
+                          onSubmitted: (_) => _doLogin(),
+                        ),
+                        if (loginType > normalLogin) ...[
+                          const SizedBox(height: SettingsStyles.itemGap),
+                          RoundInputHint(
+                            ctrl: passwordConfirmCtrl,
+                            hintText: "Confirm Password",
+                            isPassword: true,
+                            icon: Icons.password_outlined,
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+                        SettingsPrimaryButton(
+                          label: loginType > normalLogin ? "Create User" : "Login",
+                          expanded: true,
+                          icon: loginType > normalLogin ? Icons.person_add_alt_1 : Icons.login,
+                          onPressed: _doLogin,
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppConst.borderRadius))),
-                      onPressed: _doLogin,
-                      child: Text(loginType > normalLogin ? "Create User" : "Login", style: const TextStyle(fontSize: 18)),
-                    ),
+                  const SizedBox(height: 16),
+                  SettingsSecondaryButton(
+                    label: altButtonTitles[(loginType + 1) % 3],
+                    expanded: true,
+                    onPressed: () => setState(() {
+                      loginType = (loginType + 1) % 3;
+                      invited = false;
+                    }),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
                     child: TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppConst.mainColor,
+                        minimumSize: const Size(0, SettingsStyles.buttonHeight),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConst.borderRadius),
+                        ),
+                      ),
                       onPressed: () => setState(() {
-                        loginType = (loginType+1)%3;
-                        invited = false; // clear it
+                        loginType = (loginType + 2) % 3;
+                        invited = false;
                       }),
-                      child: Text(altButtonTitles[(loginType+1)%3], style: const TextStyle(fontSize: 18)),
+                      child: Text(altButtonTitles[(loginType + 2) % 3]),
                     ),
                   ),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: TextButton(
-                      onPressed: () => setState(() {
-                        loginType = (loginType+2)%3;
-                        invited = false; // clear it
-                      }),
-                      child: Text(altButtonTitles[(loginType+2)%3], style: const TextStyle(fontSize: 18)),
-                    ),
-                  ),
+                  const SizedBox(height: 16),
                 ],
-              )
+              ),
             ),
-            const SizedBox(height: 30),
           ],
         ),
-      )
+      ),
     );
   }
 }
