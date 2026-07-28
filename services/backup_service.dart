@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:app/helpers/preferences.dart';
 import 'package:app/models/asset_base_model.dart';
 import 'package:app/models/asset_model.dart';
 import 'package:app/services/albums_service.dart';
@@ -66,15 +67,37 @@ class BackupService extends ChangeNotifier {
     var authResult = await PhotoManager.requestPermissionExtend();
     if (authResult.isAuth) {
       await PhotoManager.clearFileCache();
-      List<AssetPathEntity> list = await PhotoManager.getAssetPathList(
-          hasAll: true, onlyAll: true, type: RequestType.common);
-      if (list.isEmpty) {
+      List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
+          hasAll: true, type: RequestType.common);
+      if (albums.isEmpty) {
         _setStatus(BackupServiceStatus.error, "No albums found");
         return;
       }
+      final allAlbum = albums.firstWhere((a) => a.isAll);
       // TODO: Import albums too?!
-      int totalAsset = await list[0].assetCountAsync;
-      allAssets = await list[0].getAssetListRange(start: 0, end: totalAsset);
+      int totalAsset = await allAlbum.assetCountAsync;
+      allAssets = await allAlbum.getAssetListRange(start: 0, end: totalAsset);
+
+      final excludeNames = (await Preferences.getBackupExcludeAlbums())
+          .map((n) => n.trim())
+          .where((n) => n.isNotEmpty)
+          .toSet();
+      if (excludeNames.isNotEmpty) {
+        final excludeIds = <String>{};
+        for (final album in albums) {
+          if (!excludeNames.contains(album.name)) {
+            continue;
+          }
+          final excludeCount = await album.assetCountAsync;
+          final excludeAssets =
+              await album.getAssetListRange(start: 0, end: excludeCount);
+          excludeIds.addAll(excludeAssets.map((a) => a.id));
+        }
+        if (excludeIds.isNotEmpty) {
+          allAssets =
+              allAssets.where((a) => !excludeIds.contains(a.id)).toList();
+        }
+      }
     } else {
       PhotoManager.openSetting();
       _setStatus(BackupServiceStatus.error, "No Photo Permission");
