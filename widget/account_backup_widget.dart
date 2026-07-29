@@ -19,47 +19,90 @@ class AccountBackupWidget extends StatefulWidget {
 }
 
 class _AccountBackupWidgetState extends State<AccountBackupWidget> {
-  List<String> _excludeAlbums = [];
+  List<String> _excludeAlbumIds = [];
+  List<String> _excludeAlbumNames = [];
   bool _excludeAlbumsLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    Preferences.getBackupExcludeAlbums().then((albums) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _excludeAlbums = albums;
-        _excludeAlbumsLoaded = true;
-      });
-    });
+    _loadExcludeAlbums();
   }
 
-  Future<void> _openExcludeAlbumsPicker() async {
-    final result = await showDialog<List<String>>(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => _ExcludeAlbumsDialog(selected: _excludeAlbums),
-    );
-    if (result == null || !mounted) {
-      return;
+  Future<void> _loadExcludeAlbums() async {
+    final ids = await Preferences.getBackupExcludeAlbumIds();
+    final present = await _resolvePresentAlbums(ids);
+    final resolvedIds = present?.map((a) => a.id).toList() ?? ids;
+    final resolvedNames = present?.map((a) => a.name).toList() ?? [];
+    if (present != null && present.length != ids.length) {
+      await Preferences.setBackupExcludeAlbumIds(resolvedIds);
     }
-    await Preferences.setBackupExcludeAlbums(result);
     if (!mounted) {
       return;
     }
     setState(() {
-      _excludeAlbums = result;
+      _excludeAlbumIds = resolvedIds;
+      _excludeAlbumNames = resolvedNames;
+      _excludeAlbumsLoaded = true;
+    });
+  }
+
+  /// Resolves saved album IDs to albums still on the device.
+  /// Returns null if albums could not be listed (e.g. no permission).
+  Future<List<_ExcludeAlbumItem>?> _resolvePresentAlbums(List<String> ids) async {
+    if (ids.isEmpty) {
+      return [];
+    }
+    try {
+      final authResult = await PhotoManager.requestPermissionExtend();
+      if (!authResult.isAuth) {
+        return null;
+      }
+      final paths = await PhotoManager.getAssetPathList(
+        hasAll: true,
+        type: RequestType.common,
+      );
+      final byId = {for (final path in paths) path.id: path.name};
+      return [
+        for (final id in ids)
+          if (byId.containsKey(id))
+            _ExcludeAlbumItem(id: id, name: byId[id]!),
+      ];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _openExcludeAlbumsPicker() async {
+    final result = await showDialog<List<_ExcludeAlbumItem>>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => _ExcludeAlbumsDialog(selectedIds: _excludeAlbumIds),
+    );
+    if (result == null || !mounted) {
+      return;
+    }
+    final ids = result.map((a) => a.id).toList();
+    final names = result.map((a) => a.name).toList();
+    await Preferences.setBackupExcludeAlbumIds(ids);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _excludeAlbumIds = ids;
+      _excludeAlbumNames = names;
     });
     Toast.show(msg: "Exclude albums saved");
   }
 
   String _excludeAlbumsSummary() {
-    if (_excludeAlbums.isEmpty) {
+    if (_excludeAlbumIds.isEmpty) {
       return "None selected";
     }
-    return _excludeAlbums.join(", ");
+    if (_excludeAlbumNames.isEmpty) {
+      return "${_excludeAlbumIds.length} selected";
+    }
+    return _excludeAlbumNames.join(", ");
   }
 
   String _getMainStatus(BackupService backup) {
@@ -181,7 +224,7 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
                       _excludeAlbumsLoaded ? _excludeAlbumsSummary() : "Loading...",
                       style: TextStyle(
                         fontSize: 14,
-                        color: !_excludeAlbumsLoaded || _excludeAlbums.isEmpty
+                        color: !_excludeAlbumsLoaded || _excludeAlbumIds.isEmpty
                             ? Colors.grey.shade600
                             : Colors.black87,
                       ),
@@ -213,17 +256,21 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
 }
 
 class _ExcludeAlbumItem {
+  final String id;
   final String name;
   final int? count;
-  final bool missing;
 
-  _ExcludeAlbumItem({required this.name, this.count, this.missing = false});
+  _ExcludeAlbumItem({
+    required this.id,
+    required this.name,
+    this.count,
+  });
 }
 
 class _ExcludeAlbumsDialog extends StatefulWidget {
-  const _ExcludeAlbumsDialog({required this.selected});
+  const _ExcludeAlbumsDialog({required this.selectedIds});
 
-  final List<String> selected;
+  final List<String> selectedIds;
 
   @override
   State<_ExcludeAlbumsDialog> createState() => _ExcludeAlbumsDialogState();
@@ -233,12 +280,12 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
   bool _loading = true;
   String? _error;
   List<_ExcludeAlbumItem> _albums = [];
-  late Set<String> _selected;
+  late Set<String> _selectedIds;
 
   @override
   void initState() {
     super.initState();
-    _selected = widget.selected.toSet();
+    _selectedIds = widget.selectedIds.toSet();
     _loadAlbums();
   }
 
@@ -262,23 +309,17 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
         type: RequestType.common,
       );
       final albums = <_ExcludeAlbumItem>[];
-      final seenNames = <String>{};
+      final seenIds = <String>{};
       for (final path in paths) {
-        if (path.isAll || seenNames.contains(path.name)) {
+        if (path.isAll || seenIds.contains(path.id)) {
           continue;
         }
-        seenNames.add(path.name);
+        seenIds.add(path.id);
         final count = await path.assetCountAsync;
-        albums.add(_ExcludeAlbumItem(name: path.name, count: count));
+        albums.add(_ExcludeAlbumItem(id: path.id, name: path.name, count: count));
       }
       albums.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-
-      // Keep previously selected names that are no longer on the device
-      for (final name in _selected) {
-        if (!seenNames.contains(name)) {
-          albums.add(_ExcludeAlbumItem(name: name, missing: true));
-        }
-      }
+      _selectedIds.removeWhere((id) => !seenIds.contains(id));
 
       if (!mounted) {
         return;
@@ -327,9 +368,7 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
           separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.15)),
           itemBuilder: (context, index) {
             final album = _albums[index];
-            final subtitle = album.missing
-                ? "Not found on this device"
-                : (album.count != null ? "${album.count} items" : null);
+            final subtitle = album.count != null ? "${album.count} items" : null;
             return CheckboxListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
               controlAffinity: ListTileControlAffinity.trailing,
@@ -338,18 +377,18 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
                   ? Text(
                       subtitle,
                       style: TextStyle(
-                        color: album.missing ? Colors.orange : Colors.grey.shade600,
+                        color: Colors.grey.shade600,
                         fontSize: 12,
                       ),
                     )
                   : null,
-              value: _selected.contains(album.name),
+              value: _selectedIds.contains(album.id),
               onChanged: (checked) {
                 setState(() {
                   if (checked == true) {
-                    _selected.add(album.name);
+                    _selectedIds.add(album.id);
                   } else {
-                    _selected.remove(album.name);
+                    _selectedIds.remove(album.id);
                   }
                 });
               },
@@ -373,9 +412,11 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
           onPressed: _loading
               ? null
               : () {
-                  final selected = _selected.toList()
+                  final selected = _albums
+                      .where((a) => _selectedIds.contains(a.id))
+                      .toList()
                     ..sort(
-                      (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+                      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
                     );
                   Navigator.of(context).pop(selected);
                 },

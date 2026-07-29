@@ -78,24 +78,24 @@ class BackupService extends ChangeNotifier {
       int totalAsset = await allAlbum.assetCountAsync;
       allAssets = await allAlbum.getAssetListRange(start: 0, end: totalAsset);
 
-      final excludeNames = (await Preferences.getBackupExcludeAlbums())
-          .map((n) => n.trim())
-          .where((n) => n.isNotEmpty)
+      final excludeAlbumIds = (await Preferences.getBackupExcludeAlbumIds())
+          .map((id) => id.trim())
+          .where((id) => id.isNotEmpty)
           .toSet();
-      if (excludeNames.isNotEmpty) {
-        final excludeIds = <String>{};
+      if (excludeAlbumIds.isNotEmpty) {
+        final excludeAssetIds = <String>{};
         for (final album in albums) {
-          if (!excludeNames.contains(album.name)) {
+          if (!excludeAlbumIds.contains(album.id)) {
             continue;
           }
           final excludeCount = await album.assetCountAsync;
           final excludeAssets =
               await album.getAssetListRange(start: 0, end: excludeCount);
-          excludeIds.addAll(excludeAssets.map((a) => a.id));
+          excludeAssetIds.addAll(excludeAssets.map((a) => a.id));
         }
-        if (excludeIds.isNotEmpty) {
+        if (excludeAssetIds.isNotEmpty) {
           allAssets =
-              allAssets.where((a) => !excludeIds.contains(a.id)).toList();
+              allAssets.where((a) => !excludeAssetIds.contains(a.id)).toList();
         }
       }
     } else {

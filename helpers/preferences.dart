@@ -5,9 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Preferences {
   static const _gridSize = 'gridSize';
   static const _defaultAccount = 'defaultAccount';
-  static const _backupExcludeAlbums = 'backupExcludeAlbums';
+  static const _backupExcludeAlbumIds = 'backupExcludeAlbumIds';
   static final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  static const defaultBackupExcludeAlbums = <String>[];
+  static const defaultBackupExcludeAlbumIds = <String>[];
 
   static Future<int> getGridSize(int defValue) async {
     final SharedPreferences prefs = await _prefs;
@@ -43,18 +43,18 @@ class Preferences {
     await prefs.setString(_defaultAccount, account.identifier);
   }
 
-  static Future<List<String>> getBackupExcludeAlbums() async {
+  static Future<List<String>> getBackupExcludeAlbumIds() async {
     final SharedPreferences prefs = await _prefs;
-    final result = prefs.getStringList(_backupExcludeAlbums);
+    final result = prefs.getStringList(_backupExcludeAlbumIds);
     if (result != null) {
       return result;
     }
-    await setBackupExcludeAlbums(defaultBackupExcludeAlbums);
-    return List<String>.from(defaultBackupExcludeAlbums);
+    await setBackupExcludeAlbumIds(defaultBackupExcludeAlbumIds);
+    return List<String>.from(defaultBackupExcludeAlbumIds);
   }
 
-  static Future<void> setBackupExcludeAlbums(List<String> albums) async {
+  static Future<void> setBackupExcludeAlbumIds(List<String> albumIds) async {
     final SharedPreferences prefs = await _prefs;
-    await prefs.setStringList(_backupExcludeAlbums, albums);
+    await prefs.setStringList(_backupExcludeAlbumIds, albumIds);
   }
 }
