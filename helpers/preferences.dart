@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Preferences {
   static const _gridSize = 'gridSize';
   static const _defaultAccount = 'defaultAccount';
+  static const _backupExcludeAlbumIds = 'backupExcludeAlbumIds';
   static final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  static const defaultBackupExcludeAlbumIds = <String>[];
 
   static Future<int> getGridSize(int defValue) async {
     final SharedPreferences prefs = await _prefs;
@@ -39,5 +41,20 @@ class Preferences {
     final SharedPreferences prefs = await _prefs;
     print("seeting: "+account.identifier);
     await prefs.setString(_defaultAccount, account.identifier);
+  }
+
+  static Future<List<String>> getBackupExcludeAlbumIds() async {
+    final SharedPreferences prefs = await _prefs;
+    final result = prefs.getStringList(_backupExcludeAlbumIds);
+    if (result != null) {
+      return result;
+    }
+    await setBackupExcludeAlbumIds(defaultBackupExcludeAlbumIds);
+    return List<String>.from(defaultBackupExcludeAlbumIds);
+  }
+
+  static Future<void> setBackupExcludeAlbumIds(List<String> albumIds) async {
+    final SharedPreferences prefs = await _prefs;
+    await prefs.setStringList(_backupExcludeAlbumIds, albumIds);
   }
 }
