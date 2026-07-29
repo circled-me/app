@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:app/models/user_model.dart';
 import 'package:app/services/bucket_service.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:app/helpers/toast.dart';
 import 'package:share_plus/share_plus.dart';
@@ -105,8 +105,8 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
   Widget _buildCheckbox(String title, String hint, int value, {bool enabled=true}) {
     return CheckboxListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
-      title: Text(title, style: SettingsStyles.itemTitle),
-      subtitle: Text(hint, style: SettingsStyles.caption),
+      title: Text(title, style: UIStyles.itemTitle),
+      subtitle: Text(hint, style: UIStyles.caption),
       enabled: enabled,
       controlAffinity: ListTileControlAffinity.trailing,
       value: widget.user.permissions.contains(value),
@@ -145,12 +145,12 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.user.id>0) RoundInputHint(ctrl: userEmailCtrl, hintText: "Login", autoFocus: true, disabled: true, compulsory: false,),
-                if (widget.user.id>0) const SizedBox(height: SettingsStyles.itemGap),
+                if (widget.user.id>0) const SizedBox(height: UIStyles.itemGap),
                 RoundInputHint(ctrl: userNameCtrl, hintText: "Name", autoFocus: true, compulsory: true,),
-                const SizedBox(height: SettingsStyles.itemGap),
+                const SizedBox(height: UIStyles.itemGap),
                 RoundInputHint(ctrl: userQuotaCtrl, hintText: "Quota in MB (blank for unlimited)", keyboard: TextInputType.number),
-                const SizedBox(height: SettingsStyles.itemGap),
-                SettingsDropdownField<int>(
+                const SizedBox(height: UIStyles.itemGap),
+                UIDropdownField<int>(
                   label: "Storage",
                   value: widget.user.bucket == 0 ? null : widget.user.bucket,
                   onChanged: (newValue) => setState(() => widget.user.bucket = newValue ?? 0),
@@ -158,7 +158,7 @@ class _SelectOrEditUserWidgetState extends State<EditUserWidget> {
                 ),
                 const SizedBox(height: 8),
                 const Divider(height: 20),
-                Text("Permissions", style: SettingsStyles.sectionTitle),
+                Text("Permissions", style: UIStyles.sectionTitle),
                 const SizedBox(height: 4),
                 _buildCheckbox("Admin", "Has all permissions", UserModel.permissionAdmin),
                 _buildCheckbox("Upload assets", "Can upload and create albums", UserModel.permissionPhotoUpload),

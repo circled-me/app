@@ -2,7 +2,7 @@ import 'package:app/app_consts.dart';
 import 'package:app/helpers/user.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
 import 'package:app/helpers/toast.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 
 import '../main.dart';
 import 'package:flutter/material.dart';
@@ -171,10 +171,10 @@ class _LoginPageState extends State<LoginPage>
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                SettingsStyles.pagePadding,
+                UIStyles.pagePadding,
                 8,
-                SettingsStyles.pagePadding,
-                SettingsStyles.pagePadding,
+                UIStyles.pagePadding,
+                UIStyles.pagePadding,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,10 +191,10 @@ class _LoginPageState extends State<LoginPage>
                   const SizedBox(height: 6),
                   Text(
                     loginTextTitles[loginType],
-                    style: SettingsStyles.itemSubtitle.copyWith(fontSize: 16),
+                    style: UIStyles.itemSubtitle.copyWith(fontSize: 16),
                   ),
                   const SizedBox(height: 20),
-                  SettingsCard(
+                  UICard(
                     margin: EdgeInsets.zero,
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -208,7 +208,7 @@ class _LoginPageState extends State<LoginPage>
                           keyboard: TextInputType.url,
                         ),
                         if (loginType == invitation && !invited) ...[
-                          const SizedBox(height: SettingsStyles.itemGap),
+                          const SizedBox(height: UIStyles.itemGap),
                           RoundInputHint(
                             ctrl: tokenCtrl,
                             hintText: "Token",
@@ -216,14 +216,14 @@ class _LoginPageState extends State<LoginPage>
                             disabled: invited,
                           ),
                         ],
-                        const SizedBox(height: SettingsStyles.itemGap),
+                        const SizedBox(height: UIStyles.itemGap),
                         RoundInputHint(
                           ctrl: emailAddrCtrl,
                           hintText: "Username",
                           icon: Icons.account_circle,
                           keyboard: TextInputType.name,
                         ),
-                        const SizedBox(height: SettingsStyles.itemGap),
+                        const SizedBox(height: UIStyles.itemGap),
                         RoundInputHint(
                           ctrl: passwordCtrl,
                           hintText: "Password",
@@ -234,7 +234,7 @@ class _LoginPageState extends State<LoginPage>
                           onSubmitted: (_) => _doLogin(),
                         ),
                         if (loginType > normalLogin) ...[
-                          const SizedBox(height: SettingsStyles.itemGap),
+                          const SizedBox(height: UIStyles.itemGap),
                           RoundInputHint(
                             ctrl: passwordConfirmCtrl,
                             hintText: "Confirm Password",
@@ -243,7 +243,7 @@ class _LoginPageState extends State<LoginPage>
                           ),
                         ],
                         const SizedBox(height: 18),
-                        SettingsPrimaryButton(
+                        UIPrimaryButton(
                           label: loginType > normalLogin ? "Create User" : "Login",
                           expanded: true,
                           icon: loginType > normalLogin ? Icons.person_add_alt_1 : Icons.login,
@@ -253,7 +253,7 @@ class _LoginPageState extends State<LoginPage>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SettingsSecondaryButton(
+                  UISecondaryButton(
                     label: altButtonTitles[(loginType + 1) % 3],
                     expanded: true,
                     onPressed: () => setState(() {
@@ -267,7 +267,7 @@ class _LoginPageState extends State<LoginPage>
                     child: TextButton(
                       style: TextButton.styleFrom(
                         foregroundColor: AppConst.mainColor,
-                        minimumSize: const Size(0, SettingsStyles.buttonHeight),
+                        minimumSize: const Size(0, UIStyles.buttonHeight),
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppConst.borderRadius),

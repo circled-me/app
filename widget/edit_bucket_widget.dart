@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:app/models/bucket_model.dart';
 import 'package:app/widget/round_input_hint_widget.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:app/helpers/toast.dart';
 
@@ -94,7 +94,7 @@ class _SelectOrEditBucketWidgetState extends State<EditBucketWidget> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SettingsDropdownField<int>(
+            UIDropdownField<int>(
               label: "Storage type",
               value: widget.bucket.storageType,
               onChanged: (newValue) => setState(() {
@@ -105,12 +105,12 @@ class _SelectOrEditBucketWidgetState extends State<EditBucketWidget> {
                 DropdownMenuItem<int>(child: Text("S3 Bucket"), value: 1,),
               ],
             ),
-            const SizedBox(height: SettingsStyles.itemGap),
+            const SizedBox(height: UIStyles.itemGap),
             RoundInputHint(ctrl: bucketNameCtrl, hintText: widget.bucket.storageType == BucketModel.storageTypeS3 ? "Bucket Name" : "Display Name", autoFocus: true, compulsory: true,),
-            const SizedBox(height: SettingsStyles.itemGap),
+            const SizedBox(height: UIStyles.itemGap),
             RoundInputHint(ctrl: bucketPathCtrl, hintText: widget.bucket.storageType == BucketModel.storageTypeS3 ? "Prefix" : "Path", compulsory: widget.bucket.storageType == BucketModel.storageTypeFile,),
-            const SizedBox(height: SettingsStyles.itemGap),
-            SettingsDropdownField<String>(
+            const SizedBox(height: UIStyles.itemGap),
+            UIDropdownField<String>(
               label: "Asset path format",
               value: widget.bucket.assetPathPattern.isEmpty ? null : widget.bucket.assetPathPattern,
               onChanged: (newValue) => setState(() {
@@ -124,15 +124,15 @@ class _SelectOrEditBucketWidgetState extends State<EditBucketWidget> {
               visible: widget.bucket.storageType == BucketModel.storageTypeS3,
               child: Column(
                 children: [
-                  const SizedBox(height: SettingsStyles.itemGap),
+                  const SizedBox(height: UIStyles.itemGap),
                   RoundInputHint(ctrl: bucketS3KeyCtrl, hintText: "S3 Key", compulsory: true,),
-                  const SizedBox(height: SettingsStyles.itemGap),
+                  const SizedBox(height: UIStyles.itemGap),
                   RoundInputHint(ctrl: bucketS3SecretCtrl, hintText: "S3 Secret", compulsory: true,),
-                  const SizedBox(height: SettingsStyles.itemGap),
+                  const SizedBox(height: UIStyles.itemGap),
                   RoundInputHint(ctrl: bucketEndpointCtrl, hintText: "S3 Endpoint",),
-                  const SizedBox(height: SettingsStyles.itemGap),
+                  const SizedBox(height: UIStyles.itemGap),
                   RoundInputHint(ctrl: bucketS3RegionCtrl, hintText: "S3 Region",),
-                  const SizedBox(height: SettingsStyles.itemGap),
+                  const SizedBox(height: UIStyles.itemGap),
                   RoundInputHint(ctrl: bucketS3EncryptionCtrl, hintText: "S3 Encryption",),
                 ],
               )

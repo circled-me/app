@@ -1,8 +1,8 @@
 import 'package:app/app_consts.dart';
 import 'package:flutter/material.dart';
 
-/// Shared layout, typography, and control styles for Settings screens.
-class SettingsStyles {
+/// Shared layout, typography, and control styles for app screens.
+class UIStyles {
   static const double pagePadding = 16;
   static const double sectionGap = 24;
   static const double itemGap = 12;
@@ -89,8 +89,8 @@ class SettingsStyles {
   }
 }
 
-class SettingsSectionHeader extends StatelessWidget {
-  const SettingsSectionHeader({
+class UISectionHeader extends StatelessWidget {
+  const UISectionHeader({
     Key? key,
     required this.title,
     this.trailing,
@@ -107,7 +107,7 @@ class SettingsSectionHeader extends StatelessWidget {
       padding: padding,
       child: Row(
         children: [
-          Expanded(child: Text(title, style: SettingsStyles.sectionTitle)),
+          Expanded(child: Text(title, style: UIStyles.sectionTitle)),
           if (trailing != null) trailing!,
         ],
       ),
@@ -115,8 +115,8 @@ class SettingsSectionHeader extends StatelessWidget {
   }
 }
 
-class SettingsCard extends StatelessWidget {
-  const SettingsCard({
+class UICard extends StatelessWidget {
+  const UICard({
     Key? key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
@@ -149,8 +149,8 @@ class SettingsCard extends StatelessWidget {
   }
 }
 
-class SettingsPrimaryButton extends StatelessWidget {
-  const SettingsPrimaryButton({
+class UIPrimaryButton extends StatelessWidget {
+  const UIPrimaryButton({
     Key? key,
     required this.label,
     required this.onPressed,
@@ -176,7 +176,7 @@ class SettingsPrimaryButton extends StatelessWidget {
             ],
           );
     final button = ElevatedButton(
-      style: SettingsStyles.filledButton(),
+      style: UIStyles.filledButton(),
       onPressed: onPressed,
       child: child,
     );
@@ -187,8 +187,8 @@ class SettingsPrimaryButton extends StatelessWidget {
   }
 }
 
-class SettingsSecondaryButton extends StatelessWidget {
-  const SettingsSecondaryButton({
+class UISecondaryButton extends StatelessWidget {
+  const UISecondaryButton({
     Key? key,
     required this.label,
     required this.onPressed,
@@ -214,7 +214,7 @@ class SettingsSecondaryButton extends StatelessWidget {
             ],
           );
     final button = OutlinedButton(
-      style: SettingsStyles.outlinedButton(),
+      style: UIStyles.outlinedButton(),
       onPressed: onPressed,
       child: child,
     );
@@ -225,8 +225,8 @@ class SettingsSecondaryButton extends StatelessWidget {
   }
 }
 
-class SettingsButtonRow extends StatelessWidget {
-  const SettingsButtonRow({
+class UIButtonRow extends StatelessWidget {
+  const UIButtonRow({
     Key? key,
     required this.children,
   }) : super(key: key);
@@ -246,8 +246,8 @@ class SettingsButtonRow extends StatelessWidget {
   }
 }
 
-class SettingsListRow extends StatelessWidget {
-  const SettingsListRow({
+class UIListRow extends StatelessWidget {
+  const UIListRow({
     Key? key,
     required this.icon,
     required this.title,
@@ -285,14 +285,14 @@ class SettingsListRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: SettingsStyles.itemTitle),
+                    Text(title, style: UIStyles.itemTitle),
                     if (subtitle != null && subtitle!.isNotEmpty) ...[
                       const SizedBox(height: 3),
                       Text(
                         subtitle!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: SettingsStyles.itemSubtitle,
+                        style: UIStyles.itemSubtitle,
                       ),
                     ],
                   ],
@@ -307,8 +307,8 @@ class SettingsListRow extends StatelessWidget {
   }
 }
 
-class SettingsHeroBar extends StatelessWidget implements PreferredSizeWidget {
-  const SettingsHeroBar({
+class UIHeroBar extends StatelessWidget implements PreferredSizeWidget {
+  const UIHeroBar({
     Key? key,
     required this.tag,
     required this.title,
@@ -358,8 +358,8 @@ class SettingsHeroBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class SettingsDropdownField<T> extends StatelessWidget {
-  const SettingsDropdownField({
+class UIDropdownField<T> extends StatelessWidget {
+  const UIDropdownField({
     Key? key,
     required this.label,
     required this.value,
@@ -375,7 +375,7 @@ class SettingsDropdownField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InputDecorator(
-      decoration: SettingsStyles.dropdownDecoration(label: label),
+      decoration: UIStyles.dropdownDecoration(label: label),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           isExpanded: true,

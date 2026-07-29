@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:app/helpers/preferences.dart';
 import 'package:app/helpers/toast.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -126,13 +126,13 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
                         Text(
                           _getMainStatus(backup),
                           overflow: TextOverflow.ellipsis,
-                          style: SettingsStyles.itemTitle,
+                          style: UIStyles.itemTitle,
                         ),
                         const SizedBox(height: 3),
                         Text(
                           statusDetail,
                           overflow: TextOverflow.ellipsis,
-                          style: SettingsStyles.caption,
+                          style: UIStyles.caption,
                         ),
                       ],
                     ),
@@ -141,16 +141,16 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
               ),
             ),
             const SizedBox(height: 14),
-            SettingsButtonRow(
+            UIButtonRow(
               children: [
-                SettingsPrimaryButton(
+                UIPrimaryButton(
                   label: "Start",
                   icon: Icons.play_arrow,
                   onPressed: backup.isRunning || backup.status == BackupServiceStatus.cancelling
                       ? null
                       : () => backup.start(),
                 ),
-                SettingsSecondaryButton(
+                UISecondaryButton(
                   label: "Stop",
                   icon: Icons.stop,
                   onPressed: backup.isStopped || backup.status == BackupServiceStatus.cancelling
@@ -159,12 +159,12 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
                 ),
               ],
             ),
-            const SizedBox(height: SettingsStyles.sectionGap),
-            Text("Exclude albums", style: SettingsStyles.itemTitle),
+            const SizedBox(height: UIStyles.sectionGap),
+            Text("Exclude albums", style: UIStyles.itemTitle),
             const SizedBox(height: 4),
             Text(
               "Device albums to skip during backup",
-              style: SettingsStyles.caption,
+              style: UIStyles.caption,
             ),
             const SizedBox(height: 10),
             Container(
@@ -189,17 +189,17 @@ class _AccountBackupWidgetState extends State<AccountBackupWidget> {
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
-                    style: SettingsStyles.outlinedButton(),
+                    style: UIStyles.outlinedButton(),
                     onPressed: canEditExclude ? _openExcludeAlbumsPicker : null,
                     child: const Text("Select"),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: SettingsStyles.sectionGap),
-            Text("Manual uploads", style: SettingsStyles.itemTitle),
+            const SizedBox(height: UIStyles.sectionGap),
+            Text("Manual uploads", style: UIStyles.itemTitle),
             const SizedBox(height: 10),
-            SettingsPrimaryButton(
+            UIPrimaryButton(
               label: "Share Link",
               icon: Icons.link,
               expanded: true,
@@ -333,7 +333,7 @@ class _ExcludeAlbumsDialogState extends State<_ExcludeAlbumsDialog> {
             return CheckboxListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
               controlAffinity: ListTileControlAffinity.trailing,
-              title: Text(album.name, style: SettingsStyles.itemTitle),
+              title: Text(album.name, style: UIStyles.itemTitle),
               subtitle: subtitle != null
                   ? Text(
                       subtitle,

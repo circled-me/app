@@ -2,7 +2,7 @@ import 'package:app/app_consts.dart';
 import 'package:app/pages/settings_page.dart';
 import 'package:app/services/bucket_service.dart';
 import 'package:app/widget/edit_bucket_widget.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 import '../models/account_model.dart';
 import '../models/bucket_model.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +33,7 @@ class _BucketListPageState extends State<BucketListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: SettingsHeroBar(
+      appBar: UIHeroBar(
         tag: "Storage-" + widget.account.identifier,
         title: "Storage",
         onBack: () => SettingsPage.navigatorKey.currentState!.popUntil((route) => route.isFirst),
@@ -48,7 +48,7 @@ class _BucketListPageState extends State<BucketListPage> {
           final bucketsToRender = snapshot.data!;
           if (bucketsToRender.isEmpty) {
             return Center(
-              child: Text("No storage buckets yet", style: SettingsStyles.caption),
+              child: Text("No storage buckets yet", style: UIStyles.caption),
             );
           }
           return ListView.separated(
@@ -58,7 +58,7 @@ class _BucketListPageState extends State<BucketListPage> {
             separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.12)),
             itemBuilder: (context, index) {
               final bucket = bucketsToRender[index];
-              return SettingsListRow(
+              return UIListRow(
                 icon: bucket.storageType == BucketModel.storageTypeFile
                     ? Icons.storage
                     : Icons.cloud_circle,

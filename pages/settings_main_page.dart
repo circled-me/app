@@ -2,7 +2,7 @@ import 'package:app/app_consts.dart';
 import 'package:app/pages/login_page.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:app/widget/account_widget.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 
 import '../services/accounts_service.dart';
 import 'package:flutter/material.dart';
@@ -49,10 +49,10 @@ class _SettingsMainPageState extends State<SettingsMainPage> with AutomaticKeepA
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                SettingsStyles.pagePadding,
+                UIStyles.pagePadding,
                 8,
-                SettingsStyles.pagePadding,
-                SettingsStyles.pagePadding,
+                UIStyles.pagePadding,
+                UIStyles.pagePadding,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +60,7 @@ class _SettingsMainPageState extends State<SettingsMainPage> with AutomaticKeepA
                   Row(
                     children: [
                       Expanded(
-                        child: Text("Accounts", style: SettingsStyles.pageTitle),
+                        child: Text("Accounts", style: UIStyles.pageTitle),
                       ),
                       Material(
                         color: AppConst.mainColor.withOpacity(0.1),
@@ -88,7 +88,7 @@ class _SettingsMainPageState extends State<SettingsMainPage> with AutomaticKeepA
                     accountsService.accounts.isEmpty
                         ? "Add an account to get started"
                         : "Manage backup, users, and storage",
-                    style: SettingsStyles.caption,
+                    style: UIStyles.caption,
                   ),
                   const SizedBox(height: 18),
                   ...allAccounts,

@@ -5,7 +5,7 @@ import 'package:app/pages/bucket_list_page.dart';
 import 'package:app/pages/user_list_page.dart';
 import 'package:app/services/websocket_service.dart';
 import 'package:app/widget/account_backup_widget.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 import 'package:expandable/expandable.dart';
 import 'package:provider/provider.dart';
 import '../services/accounts_service.dart';
@@ -22,7 +22,7 @@ class AccountWidget extends StatelessWidget {
 
   List<Widget> getInfoHeader() {
     var result = <Widget>[
-      Text(account.getDisplayName, style: SettingsStyles.itemTitle),
+      Text(account.getDisplayName, style: UIStyles.itemTitle),
       const SizedBox(height: 6),
     ];
     if (account.hasQuotaInfo && account.hasUsageInfo) {
@@ -39,7 +39,7 @@ class AccountWidget extends StatelessWidget {
       result.add(const SizedBox(height: 8));
       result.add(Text(
         account.getUsageAsString + " out of " + account.getQuotaAsString,
-        style: SettingsStyles.caption,
+        style: UIStyles.caption,
       ));
     } else if (account.hasUsageInfo) {
       result.add(
@@ -55,7 +55,7 @@ class AccountWidget extends StatelessWidget {
       result.add(const SizedBox(height: 8));
       result.add(Text(
         account.getUsageAsString + " out of <unknown>",
-        style: SettingsStyles.caption,
+        style: UIStyles.caption,
       ));
     }
     return result;
@@ -117,7 +117,7 @@ class AccountWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAdmin = account.isAdmin();
-    return SettingsCard(
+    return UICard(
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
       child: ExpandablePanel(
         controller: expController,
@@ -139,7 +139,7 @@ class AccountWidget extends StatelessWidget {
         ),
         collapsed: Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: Text("Tap to manage this account", style: SettingsStyles.caption),
+          child: Text("Tap to manage this account", style: UIStyles.caption),
         ),
         expanded: Padding(
           padding: const EdgeInsets.only(right: 8, bottom: 8, top: 4),
@@ -148,29 +148,29 @@ class AccountWidget extends StatelessWidget {
             children: [
               const Divider(height: 1),
               const SizedBox(height: 16),
-              SettingsSecondaryButton(
+              UISecondaryButton(
                 label: "Log Out",
                 expanded: true,
                 icon: Icons.logout,
                 onPressed: logout,
               ),
               if (AccountsService.hasBackup(account)) ...[
-                const SizedBox(height: SettingsStyles.sectionGap),
-                const SettingsSectionHeader(title: "Backup"),
+                const SizedBox(height: UIStyles.sectionGap),
+                const UISectionHeader(title: "Backup"),
                 ChangeNotifierProvider(
                   create: (ctx) => AccountsService.backupFor(account),
                   child: const AccountBackupWidget(),
                 ),
               ],
               if (isAdmin) ...[
-                const SizedBox(height: SettingsStyles.sectionGap),
-                const SettingsSectionHeader(title: "Server"),
-                SettingsButtonRow(
+                const SizedBox(height: UIStyles.sectionGap),
+                const UISectionHeader(title: "Server"),
+                UIButtonRow(
                   children: [
                     Hero(
                       tag: "Users-" + account.identifier,
                       transitionOnUserGestures: true,
-                      child: SettingsPrimaryButton(
+                      child: UIPrimaryButton(
                         label: "Users",
                         icon: Icons.people_outline,
                         onPressed: () => Navigator.of(context).pushNamed(UserListPage.route, arguments: account),
@@ -179,7 +179,7 @@ class AccountWidget extends StatelessWidget {
                     Hero(
                       tag: "Storage-" + account.identifier,
                       transitionOnUserGestures: true,
-                      child: SettingsPrimaryButton(
+                      child: UIPrimaryButton(
                         label: "Storage",
                         icon: Icons.cloud_outlined,
                         onPressed: () => Navigator.of(context).pushNamed(BucketListPage.route, arguments: account),

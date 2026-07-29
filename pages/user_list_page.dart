@@ -3,7 +3,7 @@ import 'package:app/models/user_model.dart';
 import 'package:app/pages/settings_page.dart';
 import 'package:app/services/user_service.dart';
 import 'package:app/widget/edit_user_widget.dart';
-import 'package:app/widget/settings_ui.dart';
+import 'package:app/widget/ui.dart';
 import '../models/account_model.dart';
 import 'package:flutter/material.dart';
 
@@ -28,7 +28,7 @@ class _UserListPageState extends State<UserListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: SettingsHeroBar(
+      appBar: UIHeroBar(
         tag: "Users-" + widget.account.identifier,
         title: "Users",
         onBack: () => SettingsPage.navigatorKey.currentState!.popUntil((route) => route.isFirst),
@@ -43,7 +43,7 @@ class _UserListPageState extends State<UserListPage> {
           final usersToRender = snapshot.data!;
           if (usersToRender.isEmpty) {
             return Center(
-              child: Text("No users yet", style: SettingsStyles.caption),
+              child: Text("No users yet", style: UIStyles.caption),
             );
           }
           return ListView.separated(
@@ -53,7 +53,7 @@ class _UserListPageState extends State<UserListPage> {
             separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.12)),
             itemBuilder: (context, index) {
               final user = usersToRender[index];
-              return SettingsListRow(
+              return UIListRow(
                 icon: Icons.account_circle,
                 title: user.name,
                 subtitle: user.email,
